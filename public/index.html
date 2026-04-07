@@ -466,6 +466,24 @@
 
     .celebrate-overlay.active { display: flex; }
 
+    .celebrate-close {
+      position: absolute; top: 1.5rem; right: 1.5rem; z-index: 2;
+      width: 44px; height: 44px; border-radius: 50%;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.2);
+      color: #fff; font-size: 1.2rem;
+      cursor: pointer; transition: all 0.3s ease;
+      display: flex; align-items: center; justify-content: center;
+      backdrop-filter: blur(4px);
+    }
+
+    .celebrate-close:hover {
+      background: rgba(255,50,50,0.3);
+      border-color: rgba(255,50,50,0.6);
+      box-shadow: 0 0 15px rgba(255,50,50,0.3);
+      transform: scale(1.1);
+    }
+
     .celebrate-canvas {
       position: absolute; inset: 0; z-index: 0;
       pointer-events: none;
@@ -756,6 +774,7 @@
   <div class="celebrate-overlay" id="celebrateOverlay">
     <canvas class="celebrate-canvas" id="celebrateCanvas"></canvas>
     <div class="celebrate-sparkles" id="celebrateSparkles"></div>
+    <button class="celebrate-close" onclick="hideCelebration()" title="Sluiten">&#10005;</button>
     <div class="celebrate-content">
       <div class="celebrate-emoji" id="celebrateEmoji"></div>
       <div class="celebrate-message" id="celebrateMessage"></div>
