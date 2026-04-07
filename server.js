@@ -206,6 +206,94 @@ app.get('/api/admin/stats', requireAdmin, (req, res) => {
   res.json({ totalSongs, activeSongs, playedSongs, totalVotes, activeUsers });
 });
 
+// GET /api/admin/export-csv - export songs as CSV (supports ?token= for download link)
+app.get('/api/admin/export-csv', (req, res, next) => {
+  // Allow token via query param for direct download links
+  if (req.query.token && adminTokens.has(req.query.token)) return next();
+  return requireAdmin(req, res, next);
+}, (req, res) => {
+  const songs = readSongs();
+  const header = 'title,artist,youtubeId,genre,votes,played';
+  const rows = songs.map(s => {
+    const title = `"${s.title.replace(/"/g, '""')}"`;
+    const artist = `"${s.artist.replace(/"/g, '""')}"`;
+    return `${title},${artist},${s.youtubeId},${s.genre},${s.votes},${s.played}`;
+  });
+  const csv = [header, ...rows].join('\n');
+  res.setHeader('Content-Type', 'text/csv');
+  res.setHeader('Content-Disposition', 'attachment; filename="songlist.csv"');
+  res.send(csv);
+});
+
+// POST /api/admin/import-csv - import songs from CSV
+app.post('/api/admin/import-csv', requireAdmin, async (req, res) => {
+  const { csv, mode } = req.body; // mode: 'append' or 'replace'
+  if (!csv) return res.status(400).json({ error: 'CSV data is verplicht' });
+
+  const lines = csv.split('\n').map(l => l.trim()).filter(l => l);
+  if (lines.length < 2) return res.status(400).json({ error: 'CSV moet minstens een header en 1 rij hebben' });
+
+  // Parse header
+  const header = lines[0].toLowerCase();
+  if (!header.includes('title') || !header.includes('artist')) {
+    return res.status(400).json({ error: 'CSV moet minstens "title" en "artist" kolommen hebben' });
+  }
+
+  const cols = header.split(',').map(c => c.trim().replace(/"/g, ''));
+  const titleIdx = cols.indexOf('title');
+  const artistIdx = cols.indexOf('artist');
+  const youtubeIdx = cols.indexOf('youtubeid');
+  const genreIdx = cols.indexOf('genre');
+
+  // Parse rows
+  function parseCSVRow(row) {
+    const result = [];
+    let current = '';
+    let inQuotes = false;
+    for (let i = 0; i < row.length; i++) {
+      if (row[i] === '"') {
+        if (inQuotes && row[i + 1] === '"') { current += '"'; i++; }
+        else { inQuotes = !inQuotes; }
+      } else if (row[i] === ',' && !inQuotes) {
+        result.push(current.trim()); current = '';
+      } else { current += row[i]; }
+    }
+    result.push(current.trim());
+    return result;
+  }
+
+  const newSongs = [];
+  for (let i = 1; i < lines.length; i++) {
+    const fields = parseCSVRow(lines[i]);
+    const title = fields[titleIdx];
+    const artist = fields[artistIdx];
+    if (!title || !artist) continue;
+    newSongs.push({
+      title,
+      artist,
+      youtubeId: (youtubeIdx >= 0 ? fields[youtubeIdx] : '') || '',
+      genre: (genreIdx >= 0 ? fields[genreIdx] : '') || 'Pop',
+    });
+  }
+
+  if (newSongs.length === 0) return res.status(400).json({ error: 'Geen geldige rijen gevonden' });
+
+  await acquireLock();
+  try {
+    let songs = mode === 'replace' ? [] : readSongs();
+    const maxId = songs.reduce((max, s) => Math.max(max, s.id), 0);
+    newSongs.forEach((s, i) => {
+      songs.push({ id: maxId + 1 + i, ...s, votes: 0, played: false });
+    });
+    writeSongs(songs);
+    console.log(`Admin: Imported ${newSongs.length} songs (mode: ${mode || 'append'})`);
+    broadcast('songAdded', {});
+    res.json({ imported: newSongs.length });
+  } finally {
+    releaseLock();
+  }
+});
+
 // POST /api/admin/songs - add song
 app.post('/api/admin/songs', requireAdmin, async (req, res) => {
   const { title, artist, youtubeId, genre } = req.body;

@@ -500,8 +500,15 @@
 
     <!-- SONG TABLE -->
     <div class="panel">
-      <div class="panel-header" style="color: var(--neon-cyan); text-shadow: 0 0 15px rgba(0,255,247,0.4);">
-        &#9835; Alle Nummers
+      <div class="panel-header" style="color: var(--neon-cyan); text-shadow: 0 0 15px rgba(0,255,247,0.4); justify-content: space-between; flex-wrap: wrap;">
+        <span>&#9835; Alle Nummers</span>
+        <div style="display:flex; gap:0.5rem; align-items:center;">
+          <button class="btn btn-cyan btn-sm" onclick="exportCSV()">&#8615; Export CSV</button>
+          <label class="btn btn-green btn-sm" style="cursor:pointer">
+            &#8613; Import CSV
+            <input type="file" id="csvFileInput" accept=".csv" onchange="handleCSVImport(event)" style="display:none">
+          </label>
+        </div>
       </div>
       <div class="panel-body">
         <div class="table-scroll">
@@ -777,6 +784,46 @@
     }
 
     // ===== ESCAPE =====
+    // ===== CSV EXPORT/IMPORT =====
+    function exportCSV() {
+      window.open('/api/admin/export-csv?token=' + token, '_blank');
+    }
+
+    async function handleCSVImport(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const mode = confirm(
+        'Hoe wil je importeren?\n\n' +
+        'OK = Toevoegen aan bestaande lijst\n' +
+        'Annuleren = Bestaande lijst vervangen'
+      ) ? 'append' : 'replace';
+
+      if (mode === 'replace' && !confirm('Weet je zeker dat je de HELE lijst wilt vervangen? Dit kan niet ongedaan worden!')) {
+        event.target.value = '';
+        return;
+      }
+
+      const text = await file.text();
+      try {
+        const res = await fetch('/api/admin/import-csv', {
+          method: 'POST',
+          headers: authHeaders(),
+          body: JSON.stringify({ csv: text, mode })
+        });
+        const data = await res.json();
+        if (res.ok) {
+          toast(`${data.imported} nummers ge\u00EFmporteerd!`);
+          loadAll();
+        } else {
+          toast(data.error, true);
+        }
+      } catch (e) {
+        toast('Fout bij importeren', true);
+      }
+      event.target.value = '';
+    }
+
     // ===== CELEBRATION =====
     async function triggerCelebration() {
       const message = document.getElementById('celebrateMsg').value.trim();
