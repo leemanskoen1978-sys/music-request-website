@@ -1,56 +1,154 @@
 const express = require('express');
 const crypto = require('crypto');
+const Database = require('better-sqlite3');
 const fs = require('fs');
 const path = require('path');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const SONGS_FILE = path.join(__dirname, 'data', 'songs.json');
-const CONFIG_FILE = path.join(__dirname, 'data', 'config.json');
+const DB_PATH = path.join(__dirname, 'data', 'music.db');
+const SONGS_JSON = path.join(__dirname, 'data', 'songs.json');
+const CONFIG_JSON = path.join(__dirname, 'data', 'config.json');
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// ===== IN-MEMORY STATE =====
-let isWriting = false;
-const adminTokens = new Set();
-const userVotes = {}; // { userId: [songId, songId, ...] }
-const MAX_VOTES = 5;
-const sseClients = []; // SSE connections
-let activeCelebration = null; // { message, type } or null
+// ===== DATABASE SETUP =====
+const db = new Database(DB_PATH, { wal: true }); // WAL mode for concurrent reads
+db.pragma('journal_mode = WAL');
+db.pragma('busy_timeout = 5000');
 
-// ===== FILE HELPERS =====
-function readSongs() {
-  return JSON.parse(fs.readFileSync(SONGS_FILE, 'utf-8'));
-}
+// Create tables
+db.exec(`
+  CREATE TABLE IF NOT EXISTS songs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,
+    artist TEXT NOT NULL,
+    youtubeId TEXT DEFAULT '',
+    genre TEXT DEFAULT 'Pop',
+    votes INTEGER DEFAULT 0,
+    played INTEGER DEFAULT 0
+  );
 
-function writeSongs(songs) {
-  fs.writeFileSync(SONGS_FILE, JSON.stringify(songs, null, 2), 'utf-8');
-}
+  CREATE TABLE IF NOT EXISTS user_votes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    userId TEXT NOT NULL,
+    songId INTEGER NOT NULL,
+    createdAt TEXT DEFAULT (datetime('now')),
+    UNIQUE(userId, songId)
+  );
 
-function readConfig() {
-  return JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf-8'));
-}
+  CREATE TABLE IF NOT EXISTS config (
+    key TEXT PRIMARY KEY,
+    value TEXT
+  );
 
-function writeConfig(config) {
-  fs.writeFileSync(CONFIG_FILE, JSON.stringify(config, null, 2), 'utf-8');
-}
+  CREATE INDEX IF NOT EXISTS idx_user_votes_userId ON user_votes(userId);
+  CREATE INDEX IF NOT EXISTS idx_songs_played ON songs(played);
+  CREATE INDEX IF NOT EXISTS idx_songs_votes ON songs(votes DESC);
+`);
 
-// ===== WRITE LOCK HELPER =====
-async function acquireLock() {
-  let attempts = 0;
-  while (isWriting && attempts < 20) {
-    await new Promise(r => setTimeout(r, 50));
-    attempts++;
+// ===== AUTO-MIGRATE FROM JSON =====
+function migrateFromJSON() {
+  const songCount = db.prepare('SELECT COUNT(*) as count FROM songs').get().count;
+  if (songCount > 0) return; // Already has data
+
+  // Migrate songs
+  if (fs.existsSync(SONGS_JSON)) {
+    const songs = JSON.parse(fs.readFileSync(SONGS_JSON, 'utf-8'));
+    const insert = db.prepare(
+      'INSERT INTO songs (id, title, artist, youtubeId, genre, votes, played) VALUES (?, ?, ?, ?, ?, ?, ?)'
+    );
+    const migrate = db.transaction(() => {
+      for (const s of songs) {
+        insert.run(s.id, s.title, s.artist, s.youtubeId || '', s.genre || 'Pop', s.votes || 0, s.played ? 1 : 0);
+      }
+    });
+    migrate();
+    console.log(`Migrated ${songs.length} songs from JSON to SQLite`);
   }
-  isWriting = true;
+
+  // Migrate config
+  if (fs.existsSync(CONFIG_JSON)) {
+    const config = JSON.parse(fs.readFileSync(CONFIG_JSON, 'utf-8'));
+    const upsert = db.prepare('INSERT OR REPLACE INTO config (key, value) VALUES (?, ?)');
+    upsert.run('adminPassword', config.adminPassword || 'admin123');
+    upsert.run('timerActive', config.timer?.active ? '1' : '0');
+    upsert.run('timerEndsAt', config.timer?.endsAt || '');
+    console.log('Migrated config from JSON to SQLite');
+  } else {
+    // Default config
+    const upsert = db.prepare('INSERT OR REPLACE INTO config (key, value) VALUES (?, ?)');
+    upsert.run('adminPassword', 'admin123');
+    upsert.run('timerActive', '0');
+    upsert.run('timerEndsAt', '');
+  }
 }
 
-function releaseLock() {
-  isWriting = false;
+migrateFromJSON();
+
+// ===== IN-MEMORY STATE (non-persistent) =====
+const adminTokens = new Set();
+const sseClients = [];
+let activeCelebration = null;
+const MAX_VOTES = 5;
+
+// ===== PREPARED STATEMENTS =====
+const stmts = {
+  allSongs: db.prepare('SELECT * FROM songs ORDER BY artist COLLATE NOCASE'),
+  activeSongs: db.prepare('SELECT * FROM songs WHERE played = 0 ORDER BY artist COLLATE NOCASE'),
+  top10: db.prepare('SELECT * FROM songs WHERE votes > 0 AND played = 0 ORDER BY votes DESC LIMIT 10'),
+  songById: db.prepare('SELECT * FROM songs WHERE id = ?'),
+  incrementVote: db.prepare('UPDATE songs SET votes = votes + 1 WHERE id = ?'),
+  addVote: db.prepare('INSERT OR IGNORE INTO user_votes (userId, songId) VALUES (?, ?)'),
+  userVoteCount: db.prepare('SELECT COUNT(*) as count FROM user_votes WHERE userId = ?'),
+  hasUserVoted: db.prepare('SELECT 1 FROM user_votes WHERE userId = ? AND songId = ?'),
+  markPlayed: db.prepare('UPDATE songs SET played = 1 WHERE id = ?'),
+  deleteSong: db.prepare('DELETE FROM songs WHERE id = ?'),
+  resetVotes: db.prepare('UPDATE songs SET votes = 0'),
+  clearUserVotes: db.prepare('DELETE FROM user_votes'),
+  addSong: db.prepare('INSERT INTO songs (title, artist, youtubeId, genre, votes, played) VALUES (?, ?, ?, ?, 0, 0)'),
+  getConfig: db.prepare('SELECT value FROM config WHERE key = ?'),
+  setConfig: db.prepare('INSERT OR REPLACE INTO config (key, value) VALUES (?, ?)'),
+  stats: db.prepare(`
+    SELECT
+      COUNT(*) as totalSongs,
+      SUM(CASE WHEN played = 0 THEN 1 ELSE 0 END) as activeSongs,
+      SUM(CASE WHEN played = 1 THEN 1 ELSE 0 END) as playedSongs,
+      SUM(votes) as totalVotes
+    FROM songs
+  `),
+  activeUsers: db.prepare('SELECT COUNT(DISTINCT userId) as count FROM user_votes'),
+};
+
+// ===== HELPERS =====
+function getConfig(key) {
+  const row = stmts.getConfig.get(key);
+  return row ? row.value : null;
 }
 
-// ===== ADMIN AUTH MIDDLEWARE =====
+function setConfig(key, value) {
+  stmts.setConfig.run(key, value);
+}
+
+function getTimer() {
+  return {
+    active: getConfig('timerActive') === '1',
+    endsAt: getConfig('timerEndsAt') || null,
+  };
+}
+
+function isVotingClosed() {
+  const timer = getTimer();
+  if (!timer.active || !timer.endsAt) return false;
+  return new Date() >= new Date(timer.endsAt);
+}
+
+function songRow(s) {
+  return { ...s, played: !!s.played };
+}
+
+// ===== ADMIN AUTH =====
 function requireAdmin(req, res, next) {
   const token = req.headers['authorization']?.replace('Bearer ', '');
   if (!token || !adminTokens.has(token)) {
@@ -59,112 +157,85 @@ function requireAdmin(req, res, next) {
   next();
 }
 
-// ===== SSE: BROADCAST =====
+// ===== SSE =====
 function broadcast(event, data) {
   const msg = `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
   sseClients.forEach(res => res.write(msg));
-}
-
-// ===== TIMER CHECK =====
-function isTimerExpired() {
-  const config = readConfig();
-  if (!config.timer.active || !config.timer.endsAt) return false;
-  return new Date() >= new Date(config.timer.endsAt);
-}
-
-function isVotingClosed() {
-  const config = readConfig();
-  if (!config.timer.active) return false;
-  if (!config.timer.endsAt) return false;
-  return new Date() >= new Date(config.timer.endsAt);
 }
 
 // ==========================================
 // PUBLIC ENDPOINTS
 // ==========================================
 
-// GET /api/songs - all active songs (excludes played)
 app.get('/api/songs', (req, res) => {
-  const songs = readSongs();
   const includeAll = req.query.includeAll === 'true';
-  const filtered = includeAll ? songs : songs.filter(s => !s.played);
-  filtered.sort((a, b) => a.artist.localeCompare(b.artist));
-  res.json(filtered);
+  const songs = includeAll ? stmts.allSongs.all() : stmts.activeSongs.all();
+  res.json(songs.map(songRow));
 });
 
-// GET /api/top10 - top 10 most voted (excludes played)
 app.get('/api/top10', (req, res) => {
-  const songs = readSongs();
-  const top10 = songs
-    .filter(s => s.votes > 0 && !s.played)
-    .sort((a, b) => b.votes - a.votes)
-    .slice(0, 10);
-  res.json(top10);
+  res.json(stmts.top10.all().map(songRow));
 });
 
-// POST /api/songs/:id/vote - vote with user tracking
-app.post('/api/songs/:id/vote', async (req, res) => {
+app.post('/api/songs/:id/vote', (req, res) => {
   const songId = parseInt(req.params.id, 10);
   const userId = req.headers['x-user-id'];
 
-  if (!userId) {
-    return res.status(400).json({ error: 'Missing X-User-Id header' });
-  }
+  if (!userId) return res.status(400).json({ error: 'Missing X-User-Id header' });
+  if (isVotingClosed()) return res.status(403).json({ error: 'Stemmen is gesloten!' });
 
-  // Check timer
-  if (isVotingClosed()) {
-    return res.status(403).json({ error: 'Stemmen is gesloten!' });
-  }
-
-  // Check vote limit
-  if (!userVotes[userId]) userVotes[userId] = [];
-  if (userVotes[userId].length >= MAX_VOTES) {
+  const voteCount = stmts.userVoteCount.get(userId).count;
+  if (voteCount >= MAX_VOTES) {
     return res.status(403).json({ error: `Je hebt al ${MAX_VOTES} stemmen gebruikt!` });
   }
 
-  await acquireLock();
-  try {
-    const songs = readSongs();
-    const song = songs.find(s => s.id === songId);
-    if (!song) return res.status(404).json({ error: 'Song not found' });
-    if (song.played) return res.status(400).json({ error: 'Dit nummer is al gespeeld' });
+  const song = stmts.songById.get(songId);
+  if (!song) return res.status(404).json({ error: 'Song not found' });
+  if (song.played) return res.status(400).json({ error: 'Dit nummer is al gespeeld' });
 
-    song.votes += 1;
-    userVotes[userId].push(songId);
-    writeSongs(songs);
-
-    console.log(`Vote: "${song.title}" by ${song.artist} → ${song.votes} votes (user: ${userId.slice(0, 8)}...)`);
-
-    // Broadcast vote event via SSE
-    broadcast('vote', {
-      songId: song.id,
-      title: song.title,
-      artist: song.artist,
-      votes: song.votes,
-      userId: userId.slice(0, 8)
-    });
-
-    res.json({ song, votesUsed: userVotes[userId].length, maxVotes: MAX_VOTES });
-  } finally {
-    releaseLock();
+  // Check if already voted for this song
+  if (stmts.hasUserVoted.get(userId, songId)) {
+    return res.status(400).json({ error: 'Je hebt al op dit nummer gestemd' });
   }
+
+  // Atomic: increment vote + record user vote in a transaction
+  const doVote = db.transaction(() => {
+    stmts.incrementVote.run(songId);
+    stmts.addVote.run(userId, songId);
+  });
+  doVote();
+
+  const updatedSong = stmts.songById.get(songId);
+  const newVoteCount = stmts.userVoteCount.get(userId).count;
+
+  console.log(`Vote: "${updatedSong.title}" by ${updatedSong.artist} → ${updatedSong.votes} votes (user: ${userId.slice(0, 8)}...)`);
+
+  broadcast('vote', {
+    songId: updatedSong.id,
+    title: updatedSong.title,
+    artist: updatedSong.artist,
+    votes: updatedSong.votes,
+    userId: userId.slice(0, 8)
+  });
+
+  res.json({ song: songRow(updatedSong), votesUsed: newVoteCount, maxVotes: MAX_VOTES });
 });
 
-// GET /api/votes-used - get votes used by user
 app.get('/api/votes-used', (req, res) => {
   const userId = req.headers['x-user-id'];
   if (!userId) return res.json({ votesUsed: 0, maxVotes: MAX_VOTES });
-  const used = userVotes[userId]?.length || 0;
-  res.json({ votesUsed: used, maxVotes: MAX_VOTES });
+  const count = stmts.userVoteCount.get(userId).count;
+  res.json({ votesUsed: count, maxVotes: MAX_VOTES });
 });
 
-// GET /api/timer - current timer status
 app.get('/api/timer', (req, res) => {
-  const config = readConfig();
-  res.json(config.timer);
+  res.json(getTimer());
 });
 
-// GET /api/events - SSE stream
+app.get('/api/celebration', (req, res) => {
+  res.json(activeCelebration || { active: false });
+});
+
 app.get('/api/events', (req, res) => {
   res.writeHead(200, {
     'Content-Type': 'text/event-stream',
@@ -183,11 +254,10 @@ app.get('/api/events', (req, res) => {
 // ADMIN ENDPOINTS
 // ==========================================
 
-// POST /api/admin/login
 app.post('/api/admin/login', (req, res) => {
   const { password } = req.body;
-  const config = readConfig();
-  if (password !== config.adminPassword) {
+  const adminPw = getConfig('adminPassword');
+  if (password !== adminPw) {
     return res.status(401).json({ error: 'Onjuist wachtwoord' });
   }
   const token = crypto.randomBytes(32).toString('hex');
@@ -195,29 +265,28 @@ app.post('/api/admin/login', (req, res) => {
   res.json({ token });
 });
 
-// GET /api/admin/stats
 app.get('/api/admin/stats', requireAdmin, (req, res) => {
-  const songs = readSongs();
-  const totalSongs = songs.length;
-  const activeSongs = songs.filter(s => !s.played).length;
-  const playedSongs = songs.filter(s => s.played).length;
-  const totalVotes = songs.reduce((sum, s) => sum + s.votes, 0);
-  const activeUsers = Object.keys(userVotes).length;
-  res.json({ totalSongs, activeSongs, playedSongs, totalVotes, activeUsers });
+  const s = stmts.stats.get();
+  const activeUsers = stmts.activeUsers.get().count;
+  res.json({
+    totalSongs: s.totalSongs,
+    activeSongs: s.activeSongs,
+    playedSongs: s.playedSongs,
+    totalVotes: s.totalVotes || 0,
+    activeUsers,
+  });
 });
 
-// GET /api/admin/export-csv - export songs as CSV (supports ?token= for download link)
 app.get('/api/admin/export-csv', (req, res, next) => {
-  // Allow token via query param for direct download links
   if (req.query.token && adminTokens.has(req.query.token)) return next();
   return requireAdmin(req, res, next);
 }, (req, res) => {
-  const songs = readSongs();
+  const songs = stmts.allSongs.all();
   const header = 'title,artist,youtubeId,genre,votes,played';
   const rows = songs.map(s => {
     const title = `"${s.title.replace(/"/g, '""')}"`;
     const artist = `"${s.artist.replace(/"/g, '""')}"`;
-    return `${title},${artist},${s.youtubeId},${s.genre},${s.votes},${s.played}`;
+    return `${title},${artist},${s.youtubeId},${s.genre},${s.votes},${!!s.played}`;
   });
   const csv = [header, ...rows].join('\n');
   res.setHeader('Content-Type', 'text/csv');
@@ -225,27 +294,24 @@ app.get('/api/admin/export-csv', (req, res, next) => {
   res.send(csv);
 });
 
-// POST /api/admin/import-csv - import songs from CSV
-app.post('/api/admin/import-csv', requireAdmin, async (req, res) => {
-  const { csv, mode } = req.body; // mode: 'append' or 'replace'
+app.post('/api/admin/import-csv', requireAdmin, (req, res) => {
+  const { csv, mode } = req.body;
   if (!csv) return res.status(400).json({ error: 'CSV data is verplicht' });
 
   const lines = csv.split('\n').map(l => l.trim()).filter(l => l);
   if (lines.length < 2) return res.status(400).json({ error: 'CSV moet minstens een header en 1 rij hebben' });
 
-  // Parse header
-  const header = lines[0].toLowerCase();
-  if (!header.includes('title') || !header.includes('artist')) {
+  const headerLine = lines[0].toLowerCase();
+  if (!headerLine.includes('title') || !headerLine.includes('artist')) {
     return res.status(400).json({ error: 'CSV moet minstens "title" en "artist" kolommen hebben' });
   }
 
-  const cols = header.split(',').map(c => c.trim().replace(/"/g, ''));
+  const cols = headerLine.split(',').map(c => c.trim().replace(/"/g, ''));
   const titleIdx = cols.indexOf('title');
   const artistIdx = cols.indexOf('artist');
   const youtubeIdx = cols.indexOf('youtubeid');
   const genreIdx = cols.indexOf('genre');
 
-  // Parse rows
   function parseCSVRow(row) {
     const result = [];
     let current = '';
@@ -278,145 +344,97 @@ app.post('/api/admin/import-csv', requireAdmin, async (req, res) => {
 
   if (newSongs.length === 0) return res.status(400).json({ error: 'Geen geldige rijen gevonden' });
 
-  await acquireLock();
-  try {
-    let songs = mode === 'replace' ? [] : readSongs();
-    const maxId = songs.reduce((max, s) => Math.max(max, s.id), 0);
-    newSongs.forEach((s, i) => {
-      songs.push({ id: maxId + 1 + i, ...s, votes: 0, played: false });
-    });
-    writeSongs(songs);
-    console.log(`Admin: Imported ${newSongs.length} songs (mode: ${mode || 'append'})`);
-    broadcast('songAdded', {});
-    res.json({ imported: newSongs.length });
-  } finally {
-    releaseLock();
-  }
+  const doImport = db.transaction(() => {
+    if (mode === 'replace') {
+      db.prepare('DELETE FROM songs').run();
+      db.prepare('DELETE FROM user_votes').run();
+    }
+    for (const s of newSongs) {
+      stmts.addSong.run(s.title, s.artist, s.youtubeId, s.genre);
+    }
+  });
+  doImport();
+
+  console.log(`Admin: Imported ${newSongs.length} songs (mode: ${mode || 'append'})`);
+  broadcast('songAdded', {});
+  res.json({ imported: newSongs.length });
 });
 
-// POST /api/admin/songs - add song
-app.post('/api/admin/songs', requireAdmin, async (req, res) => {
+app.post('/api/admin/songs', requireAdmin, (req, res) => {
   const { title, artist, youtubeId, genre } = req.body;
   if (!title || !artist || !youtubeId || !genre) {
     return res.status(400).json({ error: 'Alle velden zijn verplicht' });
   }
 
-  await acquireLock();
-  try {
-    const songs = readSongs();
-    const maxId = songs.reduce((max, s) => Math.max(max, s.id), 0);
-    const newSong = {
-      id: maxId + 1,
-      title,
-      artist,
-      youtubeId,
-      genre,
-      votes: 0,
-      played: false
-    };
-    songs.push(newSong);
-    writeSongs(songs);
-    console.log(`Admin: Added "${title}" by ${artist}`);
-    broadcast('songAdded', newSong);
-    res.json(newSong);
-  } finally {
-    releaseLock();
-  }
+  const result = stmts.addSong.run(title, artist, youtubeId, genre);
+  const newSong = stmts.songById.get(result.lastInsertRowid);
+  console.log(`Admin: Added "${title}" by ${artist}`);
+  broadcast('songAdded', songRow(newSong));
+  res.json(songRow(newSong));
 });
 
-// DELETE /api/admin/songs/:id
-app.delete('/api/admin/songs/:id', requireAdmin, async (req, res) => {
+app.delete('/api/admin/songs/:id', requireAdmin, (req, res) => {
   const songId = parseInt(req.params.id, 10);
+  const song = stmts.songById.get(songId);
+  if (!song) return res.status(404).json({ error: 'Song not found' });
 
-  await acquireLock();
-  try {
-    let songs = readSongs();
-    const song = songs.find(s => s.id === songId);
-    if (!song) return res.status(404).json({ error: 'Song not found' });
-
-    songs = songs.filter(s => s.id !== songId);
-    writeSongs(songs);
-    console.log(`Admin: Deleted "${song.title}" by ${song.artist}`);
-    broadcast('songRemoved', { id: songId });
-    res.json({ success: true });
-  } finally {
-    releaseLock();
-  }
+  stmts.deleteSong.run(songId);
+  console.log(`Admin: Deleted "${song.title}" by ${song.artist}`);
+  broadcast('songRemoved', { id: songId });
+  res.json({ success: true });
 });
 
-// POST /api/admin/songs/:id/played - mark as played
-app.post('/api/admin/songs/:id/played', requireAdmin, async (req, res) => {
+app.post('/api/admin/songs/:id/played', requireAdmin, (req, res) => {
   const songId = parseInt(req.params.id, 10);
+  const song = stmts.songById.get(songId);
+  if (!song) return res.status(404).json({ error: 'Song not found' });
 
-  await acquireLock();
-  try {
-    const songs = readSongs();
-    const song = songs.find(s => s.id === songId);
-    if (!song) return res.status(404).json({ error: 'Song not found' });
-
-    song.played = true;
-    writeSongs(songs);
-    console.log(`Admin: Marked "${song.title}" as played`);
-    broadcast('songPlayed', { id: songId, title: song.title, artist: song.artist });
-    res.json(song);
-  } finally {
-    releaseLock();
-  }
+  stmts.markPlayed.run(songId);
+  const updated = stmts.songById.get(songId);
+  console.log(`Admin: Marked "${song.title}" as played`);
+  broadcast('songPlayed', { id: songId, title: song.title, artist: song.artist });
+  res.json(songRow(updated));
 });
 
-// POST /api/admin/reset-votes
-app.post('/api/admin/reset-votes', requireAdmin, async (req, res) => {
-  await acquireLock();
-  try {
-    const songs = readSongs();
-    songs.forEach(s => s.votes = 0);
-    writeSongs(songs);
-    // Clear user vote tracking
-    Object.keys(userVotes).forEach(k => delete userVotes[k]);
-    console.log('Admin: All votes reset');
-    broadcast('votesReset', {});
-    res.json({ success: true });
-  } finally {
-    releaseLock();
-  }
+app.post('/api/admin/reset-votes', requireAdmin, (req, res) => {
+  const doReset = db.transaction(() => {
+    stmts.resetVotes.run();
+    stmts.clearUserVotes.run();
+  });
+  doReset();
+  console.log('Admin: All votes reset');
+  broadcast('votesReset', {});
+  res.json({ success: true });
 });
 
-// POST /api/admin/timer
 app.post('/api/admin/timer', requireAdmin, (req, res) => {
-  const config = readConfig();
   const { minutes, stop } = req.body;
 
   if (stop) {
-    config.timer = { active: false, endsAt: null };
-    writeConfig(config);
-    broadcast('timer', config.timer);
+    setConfig('timerActive', '0');
+    setConfig('timerEndsAt', '');
+    const timer = { active: false, endsAt: null };
+    broadcast('timer', timer);
     console.log('Admin: Timer stopped');
-    return res.json(config.timer);
+    return res.json(timer);
   }
 
   if (minutes && minutes > 0) {
     const endsAt = new Date(Date.now() + minutes * 60 * 1000).toISOString();
-    config.timer = { active: true, endsAt };
-    writeConfig(config);
-    broadcast('timer', config.timer);
+    setConfig('timerActive', '1');
+    setConfig('timerEndsAt', endsAt);
+    const timer = { active: true, endsAt };
+    broadcast('timer', timer);
     console.log(`Admin: Timer set for ${minutes} minutes`);
-    return res.json(config.timer);
+    return res.json(timer);
   }
 
   res.status(400).json({ error: 'Geef minutes of stop op' });
 });
 
-// GET /api/celebration - current celebration state (polling fallback)
-app.get('/api/celebration', (req, res) => {
-  res.json(activeCelebration || { active: false });
-});
-
-// POST /api/admin/celebrate - trigger celebration on all screens
 app.post('/api/admin/celebrate', requireAdmin, (req, res) => {
   const { message, type } = req.body;
-  if (!message) {
-    return res.status(400).json({ error: 'Bericht is verplicht' });
-  }
+  if (!message) return res.status(400).json({ error: 'Bericht is verplicht' });
   const celebrationType = type || 'custom';
   activeCelebration = { active: true, message, type: celebrationType };
   console.log(`Admin: Celebration triggered — "${message}" (${celebrationType})`);
@@ -424,7 +442,6 @@ app.post('/api/admin/celebrate', requireAdmin, (req, res) => {
   res.json({ success: true });
 });
 
-// POST /api/admin/celebrate/stop - dismiss celebration on all screens
 app.post('/api/admin/celebrate/stop', requireAdmin, (req, res) => {
   activeCelebration = null;
   broadcast('celebrateStop', {});
@@ -438,4 +455,9 @@ app.post('/api/admin/celebrate/stop', requireAdmin, (req, res) => {
 app.listen(PORT, () => {
   console.log(`🎵 Music Request Server running on http://localhost:${PORT}`);
   console.log(`🔑 Admin panel: http://localhost:${PORT}/admin.html`);
+  console.log(`📀 Database: ${DB_PATH}`);
 });
+
+// Graceful shutdown
+process.on('SIGINT', () => { db.close(); process.exit(); });
+process.on('SIGTERM', () => { db.close(); process.exit(); });

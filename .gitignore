@@ -1,2 +1,5 @@
 node_modules/
 .DS_Store
+data/music.db
+data/music.db-wal
+data/music.db-shm
