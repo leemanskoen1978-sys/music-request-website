@@ -1,0 +1,1027 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Music Request | Kies Je Nummer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --neon-cyan: #00fff7;
+      --neon-magenta: #ff00ff;
+      --neon-purple: #b400ff;
+      --neon-pink: #ff2d95;
+      --neon-blue: #00b4ff;
+      --neon-green: #39ff14;
+      --bg-dark: #0a0a12;
+      --bg-darker: #060609;
+      --panel-bg: rgba(10, 10, 24, 0.8);
+      --panel-border: rgba(0, 255, 247, 0.15);
+      --text-primary: #e8e8f0;
+      --text-secondary: #8888aa;
+      --text-dim: #555570;
+    }
+
+    html { scrollbar-width: thin; scrollbar-color: var(--neon-cyan) var(--bg-darker); }
+
+    body {
+      font-family: 'Rajdhani', sans-serif;
+      background: var(--bg-dark);
+      color: var(--text-primary);
+      min-height: 100vh;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg-darker); }
+    ::-webkit-scrollbar-thumb { background: var(--neon-cyan); border-radius: 3px; }
+
+    #particles {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      z-index: 0; pointer-events: none;
+    }
+
+    body::before {
+      content: '';
+      position: fixed; top: -50%; left: -50%; width: 200%; height: 200%;
+      background: radial-gradient(ellipse at 30% 20%, rgba(0,255,247,0.03) 0%, transparent 50%),
+                  radial-gradient(ellipse at 70% 80%, rgba(255,0,255,0.03) 0%, transparent 50%),
+                  radial-gradient(ellipse at 50% 50%, rgba(180,0,255,0.02) 0%, transparent 40%);
+      z-index: 0; pointer-events: none;
+    }
+
+    /* ===== COUNTDOWN TIMER BAR ===== */
+    .timer-bar {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      background: rgba(10, 10, 24, 0.95);
+      border-bottom: 1px solid var(--neon-magenta);
+      padding: 0.6rem 1.5rem;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      backdrop-filter: blur(10px);
+    }
+
+    .timer-bar.active { display: flex; }
+    .timer-bar.expired { border-bottom-color: #ff3333; }
+
+    .timer-bar .timer-label {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.7rem; font-weight: 600;
+      letter-spacing: 0.15em; text-transform: uppercase;
+      color: var(--neon-magenta);
+      text-shadow: 0 0 10px rgba(255,0,255,0.5);
+    }
+
+    .timer-bar .timer-clock {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.4rem; font-weight: 900;
+      color: var(--neon-cyan);
+      text-shadow: 0 0 15px rgba(0,255,247,0.6), 0 0 30px rgba(0,255,247,0.3);
+      min-width: 80px; text-align: center;
+    }
+
+    .timer-bar.urgent .timer-clock {
+      color: #ff3333;
+      text-shadow: 0 0 15px rgba(255,50,50,0.8);
+      animation: timerPulse 0.5s ease-in-out infinite alternate;
+    }
+
+    .timer-bar.expired .timer-label { color: #ff3333; }
+    .timer-bar.expired .timer-clock {
+      color: #ff3333;
+      text-shadow: 0 0 15px rgba(255,50,50,0.8);
+    }
+
+    @keyframes timerPulse {
+      from { opacity: 0.6; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1.05); }
+    }
+
+    .timer-progress {
+      position: absolute; bottom: 0; left: 0; height: 2px;
+      background: linear-gradient(90deg, var(--neon-cyan), var(--neon-magenta));
+      transition: width 1s linear;
+    }
+
+    /* ===== HEADER ===== */
+    header {
+      position: relative; z-index: 10;
+      text-align: center; padding: 2rem 1rem 0.5rem;
+    }
+
+    .timer-bar.active ~ header { padding-top: 4rem; }
+
+    .logo {
+      font-family: 'Orbitron', sans-serif;
+      font-size: clamp(1.8rem, 5vw, 3.2rem);
+      font-weight: 900; letter-spacing: 0.15em; text-transform: uppercase;
+      background: linear-gradient(135deg, var(--neon-cyan), var(--neon-magenta), var(--neon-purple));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+      filter: drop-shadow(0 0 30px rgba(0,255,247,0.3));
+      animation: logoGlow 4s ease-in-out infinite alternate;
+    }
+
+    @keyframes logoGlow {
+      0% { filter: drop-shadow(0 0 20px rgba(0,255,247,0.3)); }
+      50% { filter: drop-shadow(0 0 40px rgba(255,0,255,0.4)); }
+      100% { filter: drop-shadow(0 0 20px rgba(180,0,255,0.3)); }
+    }
+
+    .subtitle {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 1rem; color: var(--text-secondary);
+      letter-spacing: 0.4em; text-transform: uppercase; margin-top: 0.3rem;
+    }
+
+    /* ===== VOTE COUNTER ===== */
+    .vote-counter {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      margin-top: 0.6rem; padding: 0.4rem 1.2rem;
+      background: rgba(255,0,255,0.08);
+      border: 1px solid rgba(255,0,255,0.25);
+      border-radius: 20px;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.75rem; font-weight: 600;
+      color: var(--neon-magenta);
+      text-shadow: 0 0 10px rgba(255,0,255,0.4);
+    }
+
+    .vote-counter .hearts {
+      display: flex; gap: 3px; font-size: 0.9rem;
+    }
+
+    .vote-counter .heart { opacity: 0.2; transition: all 0.3s; }
+    .vote-counter .heart.used { opacity: 1; color: var(--neon-magenta); text-shadow: 0 0 8px rgba(255,0,255,0.6); }
+    .vote-counter.maxed { border-color: rgba(255,50,50,0.4); color: #ff5555; }
+
+    /* ===== MAIN GRID ===== */
+    .grid-container {
+      position: relative; z-index: 10;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: auto auto;
+      grid-template-areas: "top10 songlist" "player player";
+      gap: 1.2rem; padding: 1rem 1.5rem 2rem;
+      max-width: 1400px; margin: 0 auto;
+    }
+
+    /* ===== PANEL BASE ===== */
+    .panel {
+      background: var(--panel-bg);
+      border: 1px solid var(--panel-border);
+      border-radius: 16px;
+      backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+      overflow: hidden; position: relative;
+    }
+
+    .panel::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+      background: linear-gradient(90deg, transparent, var(--neon-cyan), transparent);
+      opacity: 0.5;
+    }
+
+    .panel-header {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.85rem; font-weight: 700;
+      letter-spacing: 0.15em; text-transform: uppercase;
+      padding: 1.2rem 1.5rem 0.8rem;
+      display: flex; align-items: center; gap: 0.6rem;
+    }
+
+    .panel-header .icon { font-size: 1.1rem; }
+
+    /* ===== TOP 10 PANEL ===== */
+    .top10-panel { grid-area: top10; max-height: 560px; overflow-y: auto; }
+    .top10-panel .panel-header {
+      color: var(--neon-magenta);
+      text-shadow: 0 0 20px rgba(255,0,255,0.5);
+    }
+
+    .top10-list { list-style: none; padding: 0 1rem 1rem; }
+
+    .top10-item {
+      display: flex; align-items: center; gap: 0.8rem;
+      padding: 0.65rem 0.8rem; border-radius: 10px;
+      transition: all 0.4s cubic-bezier(0.25,0.8,0.25,1);
+      cursor: pointer; position: relative;
+    }
+
+    .top10-item:hover {
+      background: rgba(255,0,255,0.08);
+      transform: translateX(4px);
+    }
+
+    .top10-rank {
+      font-family: 'Orbitron', sans-serif;
+      font-weight: 900; font-size: 1.4rem;
+      min-width: 2.2rem; text-align: center;
+      color: var(--neon-magenta);
+      text-shadow: 0 0 15px rgba(255,0,255,0.6);
+    }
+
+    .top10-item:nth-child(1) .top10-rank {
+      font-size: 1.8rem; color: var(--neon-cyan);
+      text-shadow: 0 0 25px rgba(0,255,247,0.8), 0 0 50px rgba(0,255,247,0.3);
+    }
+    .top10-item:nth-child(2) .top10-rank { font-size: 1.6rem; text-shadow: 0 0 20px rgba(255,0,255,0.7); }
+    .top10-item:nth-child(3) .top10-rank { font-size: 1.5rem; }
+
+    .top10-info { flex: 1; min-width: 0; }
+    .top10-title { font-weight: 600; font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .top10-artist { font-size: 0.8rem; color: var(--text-secondary); }
+
+    .top10-votes {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.75rem; font-weight: 600;
+      color: var(--neon-purple);
+      text-shadow: 0 0 10px rgba(180,0,255,0.5);
+      white-space: nowrap;
+    }
+
+    .top10-empty {
+      text-align: center; padding: 3rem 1rem;
+      color: var(--text-dim); font-size: 0.95rem;
+    }
+    .top10-empty .empty-icon { font-size: 2.5rem; display: block; margin-bottom: 0.8rem; opacity: 0.4; }
+
+    /* ===== SONG LIST PANEL ===== */
+    .songlist-panel { grid-area: songlist; max-height: 560px; display: flex; flex-direction: column; }
+    .songlist-panel .panel-header {
+      color: var(--neon-cyan);
+      text-shadow: 0 0 20px rgba(0,255,247,0.5);
+    }
+
+    /* ===== GENRE FILTER CHIPS ===== */
+    .filter-bar {
+      display: flex; gap: 0.4rem; padding: 0 1.2rem 0.6rem;
+      flex-wrap: wrap;
+    }
+
+    .filter-chip {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 0.72rem; font-weight: 700;
+      letter-spacing: 0.06em; text-transform: uppercase;
+      padding: 0.3rem 0.7rem; border-radius: 14px;
+      border: 1px solid rgba(0,255,247,0.2);
+      background: transparent; color: var(--text-secondary);
+      cursor: pointer; transition: all 0.25s ease;
+    }
+
+    .filter-chip:hover {
+      border-color: var(--neon-cyan);
+      color: var(--neon-cyan);
+    }
+
+    .filter-chip.active {
+      background: rgba(0,255,247,0.12);
+      border-color: var(--neon-cyan);
+      color: var(--neon-cyan);
+      box-shadow: 0 0 12px rgba(0,255,247,0.2);
+      text-shadow: 0 0 8px rgba(0,255,247,0.4);
+    }
+
+    .search-wrapper { padding: 0 1.2rem 0.8rem; position: relative; }
+
+    .search-input {
+      width: 100%; padding: 0.7rem 1rem 0.7rem 2.6rem;
+      background: rgba(0,255,247,0.04);
+      border: 1px solid rgba(0,255,247,0.12);
+      border-radius: 10px; color: var(--text-primary);
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 0.95rem; font-weight: 500;
+      outline: none; transition: all 0.3s ease;
+    }
+
+    .search-input::placeholder { color: var(--text-dim); }
+    .search-input:focus {
+      border-color: var(--neon-cyan);
+      box-shadow: 0 0 15px rgba(0,255,247,0.15), inset 0 0 15px rgba(0,255,247,0.03);
+    }
+
+    .search-icon {
+      position: absolute; left: 2rem; top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-dim); font-size: 0.9rem;
+      pointer-events: none; transition: color 0.3s;
+    }
+    .search-input:focus ~ .search-icon { color: var(--neon-cyan); }
+
+    .song-list-container { flex: 1; overflow-y: auto; padding: 0 0.8rem 1rem; }
+
+    .song-item {
+      display: flex; align-items: center; gap: 0.8rem;
+      padding: 0.6rem 0.8rem; border-radius: 10px;
+      transition: all 0.25s ease; cursor: default;
+    }
+    .song-item:hover { background: rgba(0,255,247,0.06); }
+
+    .song-info { flex: 1; min-width: 0; }
+    .song-title { font-weight: 600; font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .song-artist { font-size: 0.8rem; color: var(--text-secondary); }
+
+    .song-genre {
+      font-size: 0.65rem; font-weight: 600;
+      letter-spacing: 0.05em; text-transform: uppercase;
+      color: var(--neon-blue); opacity: 0.6;
+    }
+
+    .song-actions { display: flex; gap: 0.5rem; flex-shrink: 0; }
+
+    /* ===== BUTTONS ===== */
+    .btn {
+      font-family: 'Rajdhani', sans-serif;
+      font-weight: 700; font-size: 0.78rem;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      padding: 0.4rem 0.9rem; border-radius: 8px;
+      border: 1px solid; cursor: pointer;
+      transition: all 0.3s ease;
+      position: relative; overflow: hidden;
+    }
+
+    .btn-preview {
+      background: rgba(0,180,255,0.08);
+      border-color: rgba(0,180,255,0.3);
+      color: var(--neon-blue);
+    }
+    .btn-preview:hover {
+      background: rgba(0,180,255,0.18);
+      border-color: var(--neon-blue);
+      box-shadow: 0 0 18px rgba(0,180,255,0.25);
+      transform: scale(1.05);
+    }
+
+    .btn-vote {
+      background: rgba(255,0,255,0.08);
+      border-color: rgba(255,0,255,0.3);
+      color: var(--neon-magenta);
+    }
+    .btn-vote:hover {
+      background: rgba(255,0,255,0.18);
+      border-color: var(--neon-magenta);
+      box-shadow: 0 0 18px rgba(255,0,255,0.3);
+      transform: scale(1.05);
+      animation: voteGlow 0.6s ease-in-out infinite alternate;
+    }
+    .btn-vote.voted {
+      background: rgba(255,0,255,0.2);
+      border-color: var(--neon-magenta); color: #fff;
+    }
+    .btn-vote:disabled {
+      opacity: 0.3; cursor: not-allowed;
+      transform: none !important;
+      animation: none !important;
+      box-shadow: none !important;
+    }
+
+    @keyframes voteGlow {
+      from { box-shadow: 0 0 10px rgba(255,0,255,0.2); }
+      to { box-shadow: 0 0 25px rgba(255,0,255,0.5); }
+    }
+
+    /* ===== VOTE BURST + LIVE ANIMATION ===== */
+    .vote-burst {
+      position: fixed; pointer-events: none; z-index: 9999;
+      font-size: 1.5rem;
+      animation: burstUp 0.8s ease-out forwards;
+    }
+
+    @keyframes burstUp {
+      0% { opacity: 1; transform: translateY(0) scale(1); }
+      100% { opacity: 0; transform: translateY(-60px) scale(1.5); }
+    }
+
+    .live-vote-toast {
+      position: fixed; z-index: 9998;
+      pointer-events: none;
+      right: 20px;
+      padding: 0.6rem 1.2rem;
+      background: rgba(10,10,24,0.9);
+      border: 1px solid var(--neon-magenta);
+      border-radius: 12px;
+      font-size: 0.85rem; font-weight: 600;
+      color: var(--text-primary);
+      box-shadow: 0 0 20px rgba(255,0,255,0.3);
+      backdrop-filter: blur(8px);
+      animation: toastSlideIn 0.4s ease-out, toastFadeOut 0.4s ease-in 2.6s forwards;
+    }
+
+    .live-vote-toast .toast-heart {
+      color: var(--neon-magenta); margin-right: 0.4rem;
+    }
+
+    .live-vote-toast .toast-song {
+      color: var(--neon-cyan);
+      text-shadow: 0 0 8px rgba(0,255,247,0.4);
+    }
+
+    @keyframes toastSlideIn {
+      from { transform: translateX(100px); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+
+    @keyframes toastFadeOut {
+      to { opacity: 0; transform: translateX(40px); }
+    }
+
+    /* ===== VOTING CLOSED OVERLAY ===== */
+    .voting-closed-banner {
+      display: none;
+      position: fixed; bottom: 0; left: 0; right: 0;
+      z-index: 99;
+      background: rgba(255,30,30,0.12);
+      border-top: 1px solid rgba(255,50,50,0.4);
+      padding: 0.8rem;
+      text-align: center;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.85rem; font-weight: 700;
+      letter-spacing: 0.15em; text-transform: uppercase;
+      color: #ff5555;
+      text-shadow: 0 0 15px rgba(255,50,50,0.5);
+      backdrop-filter: blur(10px);
+    }
+
+    .voting-closed-banner.show { display: block; }
+
+    /* ===== PLAYER PANEL ===== */
+    .player-panel { grid-area: player; min-height: 200px; }
+    .player-panel .panel-header {
+      color: var(--neon-purple);
+      text-shadow: 0 0 20px rgba(180,0,255,0.5);
+    }
+
+    .player-container { padding: 0 1.2rem 1.2rem; }
+
+    .player-placeholder {
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      height: 340px;
+      border: 2px dashed rgba(180,0,255,0.2);
+      border-radius: 12px; color: var(--text-dim); gap: 0.8rem;
+    }
+
+    .player-placeholder .play-icon {
+      font-size: 3rem; opacity: 0.3;
+      animation: placeholderPulse 3s ease-in-out infinite;
+    }
+
+    @keyframes placeholderPulse {
+      0%, 100% { opacity: 0.2; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(1.1); }
+    }
+
+    .player-placeholder p { font-size: 1rem; letter-spacing: 0.1em; }
+
+    .youtube-wrapper {
+      position: relative; padding-bottom: 56.25%; height: 0;
+      border-radius: 12px; overflow: hidden;
+      box-shadow: 0 0 30px rgba(180,0,255,0.15);
+    }
+    .youtube-wrapper iframe {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none;
+    }
+
+    .now-playing { display: flex; align-items: center; gap: 0.8rem; padding: 0.8rem 0 0; }
+
+    .now-playing-label {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.65rem; font-weight: 600;
+      letter-spacing: 0.15em; text-transform: uppercase;
+      color: var(--neon-purple);
+      text-shadow: 0 0 10px rgba(180,0,255,0.5);
+    }
+    .now-playing-title { font-weight: 600; font-size: 1rem; }
+    .now-playing-artist { font-size: 0.85rem; color: var(--text-secondary); }
+
+    .equalizer { display: flex; align-items: flex-end; gap: 2px; height: 16px; }
+    .eq-bar {
+      width: 3px; background: var(--neon-purple); border-radius: 2px;
+      animation: eqBounce 0.8s ease-in-out infinite alternate;
+      box-shadow: 0 0 4px rgba(180,0,255,0.5);
+    }
+    .eq-bar:nth-child(1) { height: 8px; animation-delay: 0s; }
+    .eq-bar:nth-child(2) { height: 14px; animation-delay: 0.15s; }
+    .eq-bar:nth-child(3) { height: 6px; animation-delay: 0.3s; }
+    .eq-bar:nth-child(4) { height: 12px; animation-delay: 0.1s; }
+    .eq-bar:nth-child(5) { height: 10px; animation-delay: 0.25s; }
+
+    @keyframes eqBounce { 0% { transform: scaleY(0.4); } 100% { transform: scaleY(1); } }
+
+    .song-count {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 0.75rem; font-weight: 600;
+      color: var(--text-dim); margin-left: auto;
+      letter-spacing: 0.05em;
+    }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 900px) {
+      .grid-container {
+        grid-template-columns: 1fr;
+        grid-template-areas: "player" "top10" "songlist";
+        padding: 0.8rem;
+      }
+      .top10-panel, .songlist-panel { max-height: 400px; }
+    }
+
+    /* ===== ENTRANCE ANIMATIONS ===== */
+    .panel { opacity: 0; transform: translateY(20px); animation: panelIn 0.6s ease-out forwards; }
+    .top10-panel { animation-delay: 0.1s; }
+    .songlist-panel { animation-delay: 0.2s; }
+    .player-panel { animation-delay: 0.3s; }
+
+    @keyframes panelIn { to { opacity: 1; transform: translateY(0); } }
+
+    .song-item { opacity: 0; animation: fadeSlideIn 0.3s ease-out forwards; }
+    @keyframes fadeSlideIn {
+      from { opacity: 0; transform: translateX(10px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="particles"></canvas>
+
+  <!-- COUNTDOWN TIMER BAR -->
+  <div class="timer-bar" id="timerBar">
+    <span class="timer-label">Stemmen sluiten over</span>
+    <span class="timer-clock" id="timerClock">--:--</span>
+    <div class="timer-progress" id="timerProgress"></div>
+  </div>
+
+  <header>
+    <h1 class="logo">Music Request</h1>
+    <p class="subtitle">Kies jouw nummer</p>
+    <div class="vote-counter" id="voteCounter">
+      <div class="hearts" id="voteHearts"></div>
+      <span id="voteCountText">0/5 stemmen</span>
+    </div>
+  </header>
+
+  <main class="grid-container">
+    <!-- TOP 10 PANEL -->
+    <section class="panel top10-panel">
+      <div class="panel-header">
+        <span class="icon">&#9829;</span>
+        Top 10 Verzoeken
+      </div>
+      <ul class="top10-list" id="top10List">
+        <li class="top10-empty">
+          <span class="empty-icon">&#9835;</span>
+          Nog geen stemmen — wees de eerste!
+        </li>
+      </ul>
+    </section>
+
+    <!-- SONG LIST PANEL -->
+    <section class="panel songlist-panel">
+      <div class="panel-header">
+        <span class="icon">&#9835;</span>
+        Alle Nummers
+        <span class="song-count" id="songCount"></span>
+      </div>
+      <div class="filter-bar" id="filterBar">
+        <button class="filter-chip active" data-genre="all">Alle</button>
+        <button class="filter-chip" data-genre="Rock">Rock</button>
+        <button class="filter-chip" data-genre="Pop">Pop</button>
+        <button class="filter-chip" data-genre="Dance">Dance</button>
+        <button class="filter-chip" data-genre="Classic">Classic</button>
+        <button class="filter-chip" data-genre="Alternative">Alternative</button>
+      </div>
+      <div class="search-wrapper">
+        <input type="text" class="search-input" id="searchInput" placeholder="Zoek op titel of artiest...">
+        <span class="search-icon">&#128269;</span>
+      </div>
+      <div class="song-list-container" id="songListContainer"></div>
+    </section>
+
+    <!-- PLAYER PANEL -->
+    <section class="panel player-panel">
+      <div class="panel-header">
+        <span class="icon">&#9654;</span>
+        Nu Luisteren
+      </div>
+      <div class="player-container" id="playerContainer">
+        <div class="player-placeholder">
+          <span class="play-icon">&#9654;</span>
+          <p>Selecteer een nummer om te luisteren</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- VOTING CLOSED BANNER -->
+  <div class="voting-closed-banner" id="votingClosedBanner">
+    &#9888; Stemmen is gesloten!
+  </div>
+
+  <script>
+    // ===== USER ID =====
+    let userId = localStorage.getItem('userId');
+    if (!userId) {
+      userId = crypto.randomUUID();
+      localStorage.setItem('userId', userId);
+    }
+
+    // ===== STATE =====
+    let allSongs = [];
+    let top10 = [];
+    let currentVideoId = null;
+    let votesUsed = 0;
+    const MAX_VOTES = 5;
+    let activeGenre = 'all';
+    let votingClosed = false;
+    let timerData = null;
+    let timerInterval = null;
+    let toastCounter = 0;
+
+    // ===== DOM REFS =====
+    const top10List = document.getElementById('top10List');
+    const songListContainer = document.getElementById('songListContainer');
+    const songCount = document.getElementById('songCount');
+    const searchInput = document.getElementById('searchInput');
+    const playerContainer = document.getElementById('playerContainer');
+    const voteCounter = document.getElementById('voteCounter');
+    const voteHearts = document.getElementById('voteHearts');
+    const voteCountText = document.getElementById('voteCountText');
+    const timerBar = document.getElementById('timerBar');
+    const timerClock = document.getElementById('timerClock');
+    const timerProgress = document.getElementById('timerProgress');
+    const votingClosedBanner = document.getElementById('votingClosedBanner');
+    const filterBar = document.getElementById('filterBar');
+
+    // ===== API HELPERS =====
+    function apiHeaders() {
+      return { 'Content-Type': 'application/json', 'X-User-Id': userId };
+    }
+
+    // ===== API =====
+    async function fetchAllSongs() {
+      try {
+        const res = await fetch('/api/songs', { headers: apiHeaders() });
+        allSongs = await res.json();
+        applyFilters();
+      } catch (e) { console.error('Failed to fetch songs:', e); }
+    }
+
+    async function fetchTop10() {
+      try {
+        const res = await fetch('/api/top10');
+        top10 = await res.json();
+        renderTop10(top10);
+      } catch (e) { console.error('Failed to fetch top 10:', e); }
+    }
+
+    async function fetchVotesUsed() {
+      try {
+        const res = await fetch('/api/votes-used', { headers: apiHeaders() });
+        const data = await res.json();
+        votesUsed = data.votesUsed;
+        renderVoteCounter();
+      } catch (e) { console.error('Failed to fetch votes:', e); }
+    }
+
+    async function fetchTimer() {
+      try {
+        const res = await fetch('/api/timer');
+        timerData = await res.json();
+        updateTimerDisplay();
+      } catch (e) { console.error('Failed to fetch timer:', e); }
+    }
+
+    async function voteSong(id, btn) {
+      if (votingClosed || votesUsed >= MAX_VOTES) return;
+
+      try {
+        const res = await fetch(`/api/songs/${id}/vote`, {
+          method: 'POST',
+          headers: apiHeaders()
+        });
+
+        if (!res.ok) {
+          const err = await res.json();
+          showToast(err.error, true);
+          return;
+        }
+
+        const data = await res.json();
+        votesUsed = data.votesUsed;
+        renderVoteCounter();
+
+        btn.classList.add('voted');
+        showVoteBurst(btn);
+
+        fetchTop10();
+        if (votesUsed >= MAX_VOTES) applyFilters();
+      } catch (e) { console.error('Vote failed:', e); }
+    }
+
+    // ===== RENDER: VOTE COUNTER =====
+    function renderVoteCounter() {
+      let hearts = '';
+      for (let i = 0; i < MAX_VOTES; i++) {
+        hearts += `<span class="heart ${i < votesUsed ? 'used' : ''}">&#9829;</span>`;
+      }
+      voteHearts.innerHTML = hearts;
+      voteCountText.textContent = `${votesUsed}/${MAX_VOTES} stemmen`;
+      voteCounter.classList.toggle('maxed', votesUsed >= MAX_VOTES);
+    }
+
+    // ===== RENDER: TOP 10 =====
+    function renderTop10(songs) {
+      if (songs.length === 0) {
+        top10List.innerHTML = `
+          <li class="top10-empty">
+            <span class="empty-icon">&#9835;</span>
+            Nog geen stemmen — wees de eerste!
+          </li>`;
+        return;
+      }
+
+      top10List.innerHTML = songs.map((song, i) => `
+        <li class="top10-item" onclick="playSong('${song.youtubeId}', '${esc(song.title)}', '${esc(song.artist)}')" title="Klik om te luisteren">
+          <span class="top10-rank">${i + 1}</span>
+          <div class="top10-info">
+            <div class="top10-title">${esc(song.title)}</div>
+            <div class="top10-artist">${esc(song.artist)}</div>
+          </div>
+          <span class="top10-votes">${song.votes} &#9829;</span>
+        </li>
+      `).join('');
+    }
+
+    // ===== GENRE FILTER =====
+    filterBar.addEventListener('click', e => {
+      const chip = e.target.closest('.filter-chip');
+      if (!chip) return;
+      filterBar.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      activeGenre = chip.dataset.genre;
+      applyFilters();
+    });
+
+    function applyFilters() {
+      const q = searchInput.value.toLowerCase().trim();
+      let filtered = allSongs;
+
+      if (activeGenre !== 'all') {
+        filtered = filtered.filter(s => s.genre === activeGenre);
+      }
+      if (q) {
+        filtered = filtered.filter(s =>
+          s.title.toLowerCase().includes(q) || s.artist.toLowerCase().includes(q)
+        );
+      }
+      renderSongList(filtered);
+    }
+
+    // ===== RENDER: SONG LIST =====
+    function renderSongList(songs) {
+      songCount.textContent = `${songs.length} nummers`;
+      const disableVotes = votingClosed || votesUsed >= MAX_VOTES;
+
+      songListContainer.innerHTML = songs.map((song, i) => `
+        <div class="song-item" style="animation-delay: ${Math.min(i * 0.03, 0.5)}s">
+          <div class="song-info">
+            <div class="song-title">${esc(song.title)}</div>
+            <div class="song-artist">${esc(song.artist)}</div>
+            <div class="song-genre">${esc(song.genre)}</div>
+          </div>
+          <div class="song-actions">
+            <button class="btn btn-preview" onclick="playSong('${song.youtubeId}', '${esc(song.title)}', '${esc(song.artist)}')" title="Preview">
+              &#9654; Play
+            </button>
+            <button class="btn btn-vote"
+                    onclick="voteSong(${song.id}, this)"
+                    ${disableVotes ? 'disabled' : ''}
+                    title="${disableVotes ? (votingClosed ? 'Stemmen gesloten' : 'Maximum bereikt') : 'Stem op dit nummer'}">
+              &#9829; Vote
+            </button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // ===== RENDER: PLAYER =====
+    function playSong(youtubeId, title, artist) {
+      currentVideoId = youtubeId;
+      playerContainer.innerHTML = `
+        <div class="youtube-wrapper">
+          <iframe
+            src="https://www.youtube.com/embed/${youtubeId}?autoplay=1&rel=0&modestbranding=1"
+            allow="autoplay; encrypted-media; fullscreen"
+            allowfullscreen>
+          </iframe>
+        </div>
+        <div class="now-playing">
+          <div class="equalizer">
+            <div class="eq-bar"></div><div class="eq-bar"></div><div class="eq-bar"></div>
+            <div class="eq-bar"></div><div class="eq-bar"></div>
+          </div>
+          <div>
+            <div class="now-playing-label">Nu speelt</div>
+            <div class="now-playing-title">${title}</div>
+            <div class="now-playing-artist">${artist}</div>
+          </div>
+        </div>
+      `;
+    }
+
+    // ===== VOTE BURST =====
+    function showVoteBurst(btn) {
+      const rect = btn.getBoundingClientRect();
+      const burst = document.createElement('span');
+      burst.className = 'vote-burst';
+      burst.textContent = '\u2764';
+      burst.style.left = rect.left + rect.width / 2 - 12 + 'px';
+      burst.style.top = rect.top - 10 + 'px';
+      document.body.appendChild(burst);
+      setTimeout(() => burst.remove(), 800);
+    }
+
+    // ===== LIVE VOTE TOAST =====
+    function showLiveVoteToast(title, artist) {
+      toastCounter++;
+      const toast = document.createElement('div');
+      toast.className = 'live-vote-toast';
+      toast.style.top = (60 + ((toastCounter % 4) * 55)) + 'px';
+      toast.innerHTML = `<span class="toast-heart">&#9829;</span> Iemand stemde op <span class="toast-song">${esc(title)}</span>`;
+      document.body.appendChild(toast);
+      setTimeout(() => toast.remove(), 3000);
+    }
+
+    // ===== ERROR TOAST =====
+    function showToast(msg, isError) {
+      const toast = document.createElement('div');
+      toast.className = 'live-vote-toast';
+      toast.style.top = '70px';
+      if (isError) {
+        toast.style.borderColor = '#ff3333';
+        toast.style.boxShadow = '0 0 20px rgba(255,50,50,0.3)';
+      }
+      toast.textContent = msg;
+      document.body.appendChild(toast);
+      setTimeout(() => toast.remove(), 3000);
+    }
+
+    // ===== SEARCH =====
+    let searchTimeout;
+    searchInput.addEventListener('input', () => {
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(applyFilters, 200);
+    });
+
+    // ===== TIMER =====
+    function updateTimerDisplay() {
+      if (!timerData || !timerData.active || !timerData.endsAt) {
+        timerBar.classList.remove('active', 'urgent', 'expired');
+        votingClosed = false;
+        votingClosedBanner.classList.remove('show');
+        clearInterval(timerInterval);
+        return;
+      }
+
+      timerBar.classList.add('active');
+      clearInterval(timerInterval);
+
+      function tick() {
+        const now = Date.now();
+        const end = new Date(timerData.endsAt).getTime();
+        const diff = end - now;
+
+        if (diff <= 0) {
+          timerClock.textContent = '00:00';
+          timerBar.classList.add('expired');
+          timerBar.classList.remove('urgent');
+          timerBar.querySelector('.timer-label').textContent = 'Stemmen gesloten!';
+          votingClosed = true;
+          votingClosedBanner.classList.add('show');
+          applyFilters();
+          clearInterval(timerInterval);
+          return;
+        }
+
+        const mins = Math.floor(diff / 60000);
+        const secs = Math.floor((diff % 60000) / 1000);
+        timerClock.textContent = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+
+        timerBar.classList.toggle('urgent', diff < 60000);
+        timerBar.classList.remove('expired');
+        timerBar.querySelector('.timer-label').textContent = 'Stemmen sluiten over';
+        votingClosed = false;
+        votingClosedBanner.classList.remove('show');
+      }
+
+      tick();
+      timerInterval = setInterval(tick, 1000);
+    }
+
+    // ===== SSE: REAL-TIME EVENTS =====
+    function connectSSE() {
+      const source = new EventSource('/api/events');
+
+      source.addEventListener('vote', e => {
+        const data = JSON.parse(e.data);
+        if (data.userId !== userId.slice(0, 8)) {
+          showLiveVoteToast(data.title, data.artist);
+        }
+        fetchTop10();
+      });
+
+      source.addEventListener('timer', e => {
+        timerData = JSON.parse(e.data);
+        updateTimerDisplay();
+      });
+
+      source.addEventListener('votesReset', () => {
+        votesUsed = 0;
+        renderVoteCounter();
+        fetchAllSongs();
+        fetchTop10();
+        showToast('Alle stemmen zijn gereset!', false);
+      });
+
+      source.addEventListener('songAdded', () => fetchAllSongs());
+      source.addEventListener('songRemoved', () => { fetchAllSongs(); fetchTop10(); });
+      source.addEventListener('songPlayed', e => {
+        const data = JSON.parse(e.data);
+        showToast(`"${data.title}" is gespeeld!`, false);
+        fetchAllSongs();
+        fetchTop10();
+      });
+
+      source.onerror = () => {
+        source.close();
+        setTimeout(connectSSE, 3000);
+      };
+    }
+
+    // ===== HTML ESCAPE =====
+    function esc(str) {
+      return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
+    // ===== PARTICLES =====
+    (function initParticles() {
+      const canvas = document.getElementById('particles');
+      const ctx = canvas.getContext('2d');
+      let w, h;
+
+      function resize() { w = canvas.width = window.innerWidth; h = canvas.height = window.innerHeight; }
+      resize();
+      window.addEventListener('resize', resize);
+
+      const COLORS = ['#00fff7', '#ff00ff', '#b400ff', '#00b4ff', '#ff2d95'];
+      const particles = [];
+      for (let i = 0; i < 60; i++) {
+        particles.push({
+          x: Math.random() * w, y: Math.random() * h,
+          vx: (Math.random() - 0.5) * 0.4, vy: (Math.random() - 0.5) * 0.4,
+          size: Math.random() * 2.5 + 0.5,
+          color: COLORS[Math.floor(Math.random() * COLORS.length)],
+          alpha: Math.random() * 0.5 + 0.1,
+        });
+      }
+
+      function draw() {
+        ctx.clearRect(0, 0, w, h);
+        for (const p of particles) {
+          p.x += p.vx; p.y += p.vy;
+          if (p.x < 0) p.x = w; if (p.x > w) p.x = 0;
+          if (p.y < 0) p.y = h; if (p.y > h) p.y = 0;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+          ctx.fillStyle = p.color;
+          ctx.globalAlpha = p.alpha;
+          ctx.shadowBlur = 15;
+          ctx.shadowColor = p.color;
+          ctx.fill();
+        }
+        ctx.globalAlpha = 1; ctx.shadowBlur = 0;
+        requestAnimationFrame(draw);
+      }
+      draw();
+    })();
+
+    // ===== INIT =====
+    fetchAllSongs();
+    fetchTop10();
+    fetchVotesUsed();
+    fetchTimer();
+    connectSSE();
+    setInterval(fetchTop10, 4000);
+    setInterval(fetchTimer, 10000);
+  </script>
+</body>
+</html>

@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard | Music Request</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --neon-cyan: #00fff7;
+      --neon-magenta: #ff00ff;
+      --neon-purple: #b400ff;
+      --neon-pink: #ff2d95;
+      --neon-blue: #00b4ff;
+      --neon-green: #39ff14;
+      --neon-orange: #ff6a00;
+      --neon-red: #ff3333;
+      --bg-dark: #0a0a12;
+      --bg-darker: #060609;
+      --panel-bg: rgba(10, 10, 24, 0.85);
+      --panel-border: rgba(0, 255, 247, 0.15);
+      --text-primary: #e8e8f0;
+      --text-secondary: #8888aa;
+      --text-dim: #555570;
+    }
+
+    html { scrollbar-width: thin; scrollbar-color: var(--neon-cyan) var(--bg-darker); }
+
+    body {
+      font-family: 'Rajdhani', sans-serif;
+      background: var(--bg-dark);
+      color: var(--text-primary);
+      min-height: 100vh;
+    }
+
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg-darker); }
+    ::-webkit-scrollbar-thumb { background: var(--neon-cyan); border-radius: 3px; }
+
+    /* ===== LOGIN SCREEN ===== */
+    .login-screen {
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      min-height: 100vh; gap: 1.5rem;
+    }
+
+    .login-screen.hidden { display: none; }
+
+    .login-title {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.8rem; font-weight: 900;
+      letter-spacing: 0.15em; text-transform: uppercase;
+      background: linear-gradient(135deg, var(--neon-cyan), var(--neon-magenta));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+
+    .login-box {
+      background: var(--panel-bg);
+      border: 1px solid var(--panel-border);
+      border-radius: 16px; padding: 2rem;
+      backdrop-filter: blur(12px);
+      display: flex; flex-direction: column; gap: 1rem;
+      min-width: 320px;
+    }
+
+    .login-box input {
+      width: 100%; padding: 0.8rem 1rem;
+      background: rgba(0,255,247,0.04);
+      border: 1px solid rgba(0,255,247,0.15);
+      border-radius: 10px; color: var(--text-primary);
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 1rem; font-weight: 500; outline: none;
+      transition: all 0.3s;
+    }
+
+    .login-box input:focus {
+      border-color: var(--neon-cyan);
+      box-shadow: 0 0 15px rgba(0,255,247,0.15);
+    }
+
+    .login-error {
+      color: var(--neon-red); font-size: 0.85rem;
+      text-align: center; display: none;
+    }
+
+    /* ===== DASHBOARD ===== */
+    .dashboard { display: none; padding: 1.5rem; max-width: 1200px; margin: 0 auto; }
+    .dashboard.visible { display: block; }
+
+    .dash-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;
+    }
+
+    .dash-title {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.3rem; font-weight: 800;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--neon-cyan);
+      text-shadow: 0 0 15px rgba(0,255,247,0.4);
+    }
+
+    .dash-back {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 0.8rem; font-weight: 700;
+      text-decoration: none; color: var(--text-secondary);
+      letter-spacing: 0.08em; text-transform: uppercase;
+      transition: color 0.3s;
+    }
+    .dash-back:hover { color: var(--neon-cyan); }
+
+    /* ===== STATS ROW ===== */
+    .stats-row {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 1rem; margin-bottom: 1.5rem;
+    }
+
+    .stat-card {
+      background: var(--panel-bg);
+      border: 1px solid var(--panel-border);
+      border-radius: 12px; padding: 1.2rem;
+      text-align: center; position: relative; overflow: hidden;
+    }
+
+    .stat-card::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, transparent, var(--neon-cyan), transparent);
+      opacity: 0.4;
+    }
+
+    .stat-value {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 2rem; font-weight: 900;
+      color: var(--neon-cyan);
+      text-shadow: 0 0 15px rgba(0,255,247,0.5);
+    }
+
+    .stat-card:nth-child(2) .stat-value { color: var(--neon-magenta); text-shadow: 0 0 15px rgba(255,0,255,0.5); }
+    .stat-card:nth-child(3) .stat-value { color: var(--neon-purple); text-shadow: 0 0 15px rgba(180,0,255,0.5); }
+    .stat-card:nth-child(4) .stat-value { color: var(--neon-green); text-shadow: 0 0 15px rgba(57,255,20,0.5); }
+    .stat-card:nth-child(5) .stat-value { color: var(--neon-orange); text-shadow: 0 0 15px rgba(255,106,0,0.5); }
+
+    .stat-label {
+      font-size: 0.75rem; font-weight: 600;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      color: var(--text-secondary); margin-top: 0.3rem;
+    }
+
+    /* ===== PANELS ===== */
+    .panel {
+      background: var(--panel-bg);
+      border: 1px solid var(--panel-border);
+      border-radius: 16px; margin-bottom: 1.5rem;
+      overflow: hidden; position: relative;
+    }
+
+    .panel::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+      background: linear-gradient(90deg, transparent, var(--neon-cyan), transparent);
+      opacity: 0.5;
+    }
+
+    .panel-header {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.8rem; font-weight: 700;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      padding: 1.2rem 1.5rem 0.8rem;
+      display: flex; align-items: center; gap: 0.6rem;
+    }
+
+    .panel-body { padding: 0 1.5rem 1.5rem; }
+
+    /* ===== ACTIONS GRID ===== */
+    .actions-grid {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+
+    @media (max-width: 700px) {
+      .actions-grid { grid-template-columns: 1fr; }
+    }
+
+    .action-card {
+      background: rgba(0,0,0,0.2);
+      border: 1px solid rgba(255,255,255,0.05);
+      border-radius: 12px; padding: 1.2rem;
+    }
+
+    .action-card h3 {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.7rem; font-weight: 700;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      margin-bottom: 0.8rem;
+    }
+
+    /* ===== FORM ELEMENTS ===== */
+    .form-row {
+      display: flex; gap: 0.6rem; margin-bottom: 0.6rem;
+      flex-wrap: wrap;
+    }
+
+    .form-input {
+      flex: 1; min-width: 120px; padding: 0.6rem 0.8rem;
+      background: rgba(0,255,247,0.04);
+      border: 1px solid rgba(0,255,247,0.12);
+      border-radius: 8px; color: var(--text-primary);
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 0.9rem; font-weight: 500; outline: none;
+      transition: all 0.3s;
+    }
+
+    .form-input:focus {
+      border-color: var(--neon-cyan);
+      box-shadow: 0 0 10px rgba(0,255,247,0.1);
+    }
+
+    .form-select {
+      padding: 0.6rem 0.8rem;
+      background: rgba(0,255,247,0.04);
+      border: 1px solid rgba(0,255,247,0.12);
+      border-radius: 8px; color: var(--text-primary);
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 0.9rem; font-weight: 500; outline: none;
+      cursor: pointer;
+    }
+
+    .form-select option { background: var(--bg-dark); color: var(--text-primary); }
+
+    /* ===== BUTTONS ===== */
+    .btn {
+      font-family: 'Rajdhani', sans-serif;
+      font-weight: 700; font-size: 0.78rem;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      padding: 0.5rem 1rem; border-radius: 8px;
+      border: 1px solid; cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .btn-cyan {
+      background: rgba(0,255,247,0.1);
+      border-color: rgba(0,255,247,0.3);
+      color: var(--neon-cyan);
+    }
+    .btn-cyan:hover {
+      background: rgba(0,255,247,0.2);
+      border-color: var(--neon-cyan);
+      box-shadow: 0 0 15px rgba(0,255,247,0.25);
+    }
+
+    .btn-magenta {
+      background: rgba(255,0,255,0.1);
+      border-color: rgba(255,0,255,0.3);
+      color: var(--neon-magenta);
+    }
+    .btn-magenta:hover {
+      background: rgba(255,0,255,0.2);
+      border-color: var(--neon-magenta);
+      box-shadow: 0 0 15px rgba(255,0,255,0.25);
+    }
+
+    .btn-green {
+      background: rgba(57,255,20,0.1);
+      border-color: rgba(57,255,20,0.3);
+      color: var(--neon-green);
+    }
+    .btn-green:hover {
+      background: rgba(57,255,20,0.2);
+      border-color: var(--neon-green);
+      box-shadow: 0 0 15px rgba(57,255,20,0.25);
+    }
+
+    .btn-red {
+      background: rgba(255,50,50,0.1);
+      border-color: rgba(255,50,50,0.3);
+      color: var(--neon-red);
+    }
+    .btn-red:hover {
+      background: rgba(255,50,50,0.2);
+      border-color: var(--neon-red);
+      box-shadow: 0 0 15px rgba(255,50,50,0.25);
+    }
+
+    .btn-orange {
+      background: rgba(255,106,0,0.1);
+      border-color: rgba(255,106,0,0.3);
+      color: var(--neon-orange);
+    }
+    .btn-orange:hover {
+      background: rgba(255,106,0,0.2);
+      border-color: var(--neon-orange);
+      box-shadow: 0 0 15px rgba(255,106,0,0.25);
+    }
+
+    /* ===== SONG TABLE ===== */
+    .song-table { width: 100%; border-collapse: collapse; }
+
+    .song-table th {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.65rem; font-weight: 600;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--text-secondary);
+      text-align: left; padding: 0.6rem 0.8rem;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+
+    .song-table td {
+      padding: 0.6rem 0.8rem;
+      border-bottom: 1px solid rgba(255,255,255,0.03);
+      font-size: 0.9rem;
+    }
+
+    .song-table tr:hover td { background: rgba(0,255,247,0.03); }
+
+    .song-table .played-row td { opacity: 0.4; text-decoration: line-through; }
+
+    .genre-badge {
+      font-size: 0.65rem; font-weight: 700;
+      letter-spacing: 0.05em; text-transform: uppercase;
+      padding: 0.2rem 0.5rem; border-radius: 6px;
+      background: rgba(0,180,255,0.1);
+      color: var(--neon-blue);
+      border: 1px solid rgba(0,180,255,0.2);
+    }
+
+    .table-actions { display: flex; gap: 0.4rem; }
+
+    .btn-sm {
+      font-size: 0.7rem; padding: 0.3rem 0.6rem;
+    }
+
+    /* ===== TIMER DISPLAY ===== */
+    .timer-display {
+      display: flex; align-items: center; gap: 1rem;
+      margin-top: 0.8rem;
+    }
+
+    .timer-current {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.2rem; font-weight: 800;
+      color: var(--neon-cyan);
+      text-shadow: 0 0 10px rgba(0,255,247,0.4);
+    }
+
+    .timer-status {
+      font-size: 0.8rem; color: var(--text-secondary);
+    }
+
+    .timer-status.active-status { color: var(--neon-green); }
+    .timer-status.expired-status { color: var(--neon-red); }
+
+    /* ===== TOAST ===== */
+    .admin-toast {
+      position: fixed; top: 20px; right: 20px; z-index: 9999;
+      padding: 0.8rem 1.5rem;
+      background: rgba(10,10,24,0.95);
+      border: 1px solid var(--neon-green);
+      border-radius: 10px; font-weight: 600;
+      color: var(--neon-green);
+      box-shadow: 0 0 20px rgba(57,255,20,0.2);
+      animation: toastIn 0.3s ease-out, toastOut 0.3s ease-in 2.7s forwards;
+    }
+
+    .admin-toast.error {
+      border-color: var(--neon-red); color: var(--neon-red);
+      box-shadow: 0 0 20px rgba(255,50,50,0.2);
+    }
+
+    @keyframes toastIn { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    @keyframes toastOut { to { transform: translateY(-20px); opacity: 0; } }
+
+    /* ===== TABLE SCROLL ===== */
+    .table-scroll { max-height: 500px; overflow-y: auto; }
+  </style>
+</head>
+<body>
+
+  <!-- LOGIN SCREEN -->
+  <div class="login-screen" id="loginScreen">
+    <h1 class="login-title">Admin Login</h1>
+    <div class="login-box">
+      <input type="password" id="passwordInput" placeholder="Wachtwoord..." autofocus>
+      <button class="btn btn-cyan" onclick="login()" style="width:100%">Inloggen</button>
+      <div class="login-error" id="loginError">Onjuist wachtwoord</div>
+    </div>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div class="dashboard" id="dashboard">
+    <div class="dash-header">
+      <h1 class="dash-title">&#9881; Admin Dashboard</h1>
+      <a href="/" class="dash-back">&#8592; Terug naar website</a>
+    </div>
+
+    <!-- STATS -->
+    <div class="stats-row" id="statsRow">
+      <div class="stat-card">
+        <div class="stat-value" id="statSongs">-</div>
+        <div class="stat-label">Actieve Nummers</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="statVotes">-</div>
+        <div class="stat-label">Totaal Stemmen</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="statUsers">-</div>
+        <div class="stat-label">Actieve Stemmers</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="statPlayed">-</div>
+        <div class="stat-label">Gespeelde Nummers</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="statTotal">-</div>
+        <div class="stat-label">Totaal Nummers</div>
+      </div>
+    </div>
+
+    <!-- ACTIONS -->
+    <div class="panel">
+      <div class="panel-header" style="color: var(--neon-orange); text-shadow: 0 0 15px rgba(255,106,0,0.4);">
+        &#9889; Acties
+      </div>
+      <div class="panel-body">
+        <div class="actions-grid">
+          <!-- ADD SONG -->
+          <div class="action-card">
+            <h3 style="color: var(--neon-green);">&#43; Nummer Toevoegen</h3>
+            <div class="form-row">
+              <input class="form-input" id="newTitle" placeholder="Titel">
+              <input class="form-input" id="newArtist" placeholder="Artiest">
+            </div>
+            <div class="form-row">
+              <input class="form-input" id="newYoutubeId" placeholder="YouTube ID (bijv. dQw4w9WgXcQ)">
+              <select class="form-select" id="newGenre">
+                <option value="Rock">Rock</option>
+                <option value="Pop">Pop</option>
+                <option value="Dance">Dance</option>
+                <option value="Classic">Classic</option>
+                <option value="Alternative">Alternative</option>
+              </select>
+            </div>
+            <button class="btn btn-green" onclick="addSong()">Toevoegen</button>
+          </div>
+
+          <!-- TIMER -->
+          <div class="action-card">
+            <h3 style="color: var(--neon-cyan);">&#9202; Countdown Timer</h3>
+            <div class="form-row">
+              <input class="form-input" id="timerMinutes" type="number" min="1" max="120" value="10" placeholder="Minuten" style="max-width:100px">
+              <button class="btn btn-cyan" onclick="startTimer()">Start Timer</button>
+              <button class="btn btn-red" onclick="stopTimer()">Stop</button>
+            </div>
+            <div class="timer-display">
+              <span class="timer-current" id="adminTimerClock">--:--</span>
+              <span class="timer-status" id="adminTimerStatus">Geen timer actief</span>
+            </div>
+          </div>
+
+          <!-- RESET VOTES -->
+          <div class="action-card">
+            <h3 style="color: var(--neon-red);">&#9888; Reset Stemmen</h3>
+            <p style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:0.8rem;">
+              Zet alle stemmen terug naar 0. Dit kan niet ongedaan worden.
+            </p>
+            <button class="btn btn-red" onclick="resetVotes()">Alle Stemmen Resetten</button>
+          </div>
+
+          <!-- QUICK STATS -->
+          <div class="action-card">
+            <h3 style="color: var(--neon-magenta);">&#9829; Quick Info</h3>
+            <p style="font-size:0.85rem; color:var(--text-secondary); line-height:1.6;">
+              &#8226; Gebruikers mogen max <strong style="color:var(--neon-cyan)">5 stemmen</strong><br>
+              &#8226; Gespeelde nummers verdwijnen uit de lijst<br>
+              &#8226; Real-time updates via SSE<br>
+              &#8226; Wachtwoord: wijzig in <code style="color:var(--neon-blue)">data/config.json</code>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SONG TABLE -->
+    <div class="panel">
+      <div class="panel-header" style="color: var(--neon-cyan); text-shadow: 0 0 15px rgba(0,255,247,0.4);">
+        &#9835; Alle Nummers
+      </div>
+      <div class="panel-body">
+        <div class="table-scroll">
+          <table class="song-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Titel</th>
+                <th>Artiest</th>
+                <th>Genre</th>
+                <th>Stemmen</th>
+                <th>Status</th>
+                <th>Acties</th>
+              </tr>
+            </thead>
+            <tbody id="songTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let token = sessionStorage.getItem('adminToken');
+    let adminTimerInterval = null;
+    let adminTimerData = null;
+
+    // ===== LOGIN =====
+    if (token) showDashboard();
+
+    document.getElementById('passwordInput').addEventListener('keydown', e => {
+      if (e.key === 'Enter') login();
+    });
+
+    async function login() {
+      const pw = document.getElementById('passwordInput').value;
+      try {
+        const res = await fetch('/api/admin/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password: pw })
+        });
+        if (!res.ok) {
+          document.getElementById('loginError').style.display = 'block';
+          return;
+        }
+        const data = await res.json();
+        token = data.token;
+        sessionStorage.setItem('adminToken', token);
+        showDashboard();
+      } catch (e) {
+        document.getElementById('loginError').style.display = 'block';
+      }
+    }
+
+    function showDashboard() {
+      document.getElementById('loginScreen').classList.add('hidden');
+      document.getElementById('dashboard').classList.add('visible');
+      loadAll();
+      setInterval(loadStats, 5000);
+      setInterval(loadTimer, 5000);
+    }
+
+    function authHeaders() {
+      return { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` };
+    }
+
+    // ===== LOAD DATA =====
+    async function loadAll() {
+      await Promise.all([loadStats(), loadSongs(), loadTimer()]);
+    }
+
+    async function loadStats() {
+      try {
+        const res = await fetch('/api/admin/stats', { headers: authHeaders() });
+        if (res.status === 401) { sessionStorage.removeItem('adminToken'); location.reload(); return; }
+        const s = await res.json();
+        document.getElementById('statSongs').textContent = s.activeSongs;
+        document.getElementById('statVotes').textContent = s.totalVotes;
+        document.getElementById('statUsers').textContent = s.activeUsers;
+        document.getElementById('statPlayed').textContent = s.playedSongs;
+        document.getElementById('statTotal').textContent = s.totalSongs;
+      } catch (e) { console.error(e); }
+    }
+
+    async function loadSongs() {
+      try {
+        const res = await fetch('/api/songs?includeAll=true');
+        const songs = await res.json();
+        renderSongTable(songs);
+      } catch (e) { console.error(e); }
+    }
+
+    async function loadTimer() {
+      try {
+        const res = await fetch('/api/timer');
+        adminTimerData = await res.json();
+        updateAdminTimer();
+      } catch (e) { console.error(e); }
+    }
+
+    // ===== RENDER SONG TABLE =====
+    function renderSongTable(songs) {
+      const tbody = document.getElementById('songTableBody');
+      // Sort: active first (by votes desc), then played
+      songs.sort((a, b) => {
+        if (a.played !== b.played) return a.played ? 1 : -1;
+        return b.votes - a.votes;
+      });
+
+      tbody.innerHTML = songs.map(s => `
+        <tr class="${s.played ? 'played-row' : ''}">
+          <td>${s.id}</td>
+          <td>${esc(s.title)}</td>
+          <td>${esc(s.artist)}</td>
+          <td><span class="genre-badge">${esc(s.genre)}</span></td>
+          <td style="font-family:'Orbitron',sans-serif; font-weight:700; color:${s.votes > 0 ? 'var(--neon-magenta)' : 'var(--text-dim)'}">
+            ${s.votes}
+          </td>
+          <td style="color:${s.played ? 'var(--neon-green)' : 'var(--text-dim)'}; font-weight:600; font-size:0.8rem">
+            ${s.played ? '&#10003; Gespeeld' : 'Actief'}
+          </td>
+          <td>
+            <div class="table-actions">
+              ${!s.played ? `<button class="btn btn-green btn-sm" onclick="markPlayed(${s.id})" title="Markeer als gespeeld">&#10003; Gespeeld</button>` : ''}
+              <button class="btn btn-red btn-sm" onclick="deleteSong(${s.id}, '${esc(s.title)}')" title="Verwijderen">&#10005;</button>
+            </div>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    // ===== ACTIONS =====
+    async function addSong() {
+      const title = document.getElementById('newTitle').value.trim();
+      const artist = document.getElementById('newArtist').value.trim();
+      const youtubeId = document.getElementById('newYoutubeId').value.trim();
+      const genre = document.getElementById('newGenre').value;
+
+      if (!title || !artist || !youtubeId) {
+        toast('Vul alle velden in', true);
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/admin/songs', {
+          method: 'POST',
+          headers: authHeaders(),
+          body: JSON.stringify({ title, artist, youtubeId, genre })
+        });
+        if (res.ok) {
+          toast(`"${title}" toegevoegd!`);
+          document.getElementById('newTitle').value = '';
+          document.getElementById('newArtist').value = '';
+          document.getElementById('newYoutubeId').value = '';
+          loadAll();
+        } else {
+          const err = await res.json();
+          toast(err.error, true);
+        }
+      } catch (e) { toast('Fout bij toevoegen', true); }
+    }
+
+    async function deleteSong(id, title) {
+      if (!confirm(`Weet je zeker dat je "${title}" wilt verwijderen?`)) return;
+      try {
+        const res = await fetch(`/api/admin/songs/${id}`, {
+          method: 'DELETE', headers: authHeaders()
+        });
+        if (res.ok) {
+          toast(`"${title}" verwijderd`);
+          loadAll();
+        }
+      } catch (e) { toast('Fout bij verwijderen', true); }
+    }
+
+    async function markPlayed(id) {
+      try {
+        const res = await fetch(`/api/admin/songs/${id}/played`, {
+          method: 'POST', headers: authHeaders()
+        });
+        if (res.ok) {
+          const song = await res.json();
+          toast(`"${song.title}" gemarkeerd als gespeeld`);
+          loadAll();
+        }
+      } catch (e) { toast('Fout', true); }
+    }
+
+    async function resetVotes() {
+      if (!confirm('Weet je zeker dat je ALLE stemmen wilt resetten? Dit kan niet ongedaan worden!')) return;
+      try {
+        const res = await fetch('/api/admin/reset-votes', {
+          method: 'POST', headers: authHeaders()
+        });
+        if (res.ok) {
+          toast('Alle stemmen gereset!');
+          loadAll();
+        }
+      } catch (e) { toast('Fout bij resetten', true); }
+    }
+
+    async function startTimer() {
+      const minutes = parseInt(document.getElementById('timerMinutes').value, 10);
+      if (!minutes || minutes < 1) { toast('Voer een geldig aantal minuten in', true); return; }
+      try {
+        const res = await fetch('/api/admin/timer', {
+          method: 'POST', headers: authHeaders(),
+          body: JSON.stringify({ minutes })
+        });
+        if (res.ok) {
+          adminTimerData = await res.json();
+          updateAdminTimer();
+          toast(`Timer gestart: ${minutes} minuten`);
+        }
+      } catch (e) { toast('Fout bij timer', true); }
+    }
+
+    async function stopTimer() {
+      try {
+        const res = await fetch('/api/admin/timer', {
+          method: 'POST', headers: authHeaders(),
+          body: JSON.stringify({ stop: true })
+        });
+        if (res.ok) {
+          adminTimerData = await res.json();
+          updateAdminTimer();
+          toast('Timer gestopt');
+        }
+      } catch (e) { toast('Fout', true); }
+    }
+
+    // ===== ADMIN TIMER DISPLAY =====
+    function updateAdminTimer() {
+      clearInterval(adminTimerInterval);
+      const clock = document.getElementById('adminTimerClock');
+      const status = document.getElementById('adminTimerStatus');
+
+      if (!adminTimerData || !adminTimerData.active || !adminTimerData.endsAt) {
+        clock.textContent = '--:--';
+        status.textContent = 'Geen timer actief';
+        status.className = 'timer-status';
+        return;
+      }
+
+      function tick() {
+        const diff = new Date(adminTimerData.endsAt).getTime() - Date.now();
+        if (diff <= 0) {
+          clock.textContent = '00:00';
+          status.textContent = 'Verlopen!';
+          status.className = 'timer-status expired-status';
+          clearInterval(adminTimerInterval);
+          return;
+        }
+        const m = Math.floor(diff / 60000);
+        const s = Math.floor((diff % 60000) / 1000);
+        clock.textContent = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+        status.textContent = 'Actief';
+        status.className = 'timer-status active-status';
+      }
+
+      tick();
+      adminTimerInterval = setInterval(tick, 1000);
+    }
+
+    // ===== TOAST =====
+    function toast(msg, isError) {
+      const el = document.createElement('div');
+      el.className = 'admin-toast' + (isError ? ' error' : '');
+      el.textContent = msg;
+      document.body.appendChild(el);
+      setTimeout(() => el.remove(), 3000);
+    }
+
+    // ===== ESCAPE =====
+    function esc(str) {
+      return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+  </script>
+</body>
+</html>

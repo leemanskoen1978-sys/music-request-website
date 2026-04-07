@@ -1,0 +1,12 @@
+{
+  "name": "muziek-request-website",
+  "version": "1.0.0",
+  "description": "Interactieve muziek request website voor een muziekgroep",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.21.0"
+  }
+}

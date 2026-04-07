@@ -1,0 +1,7 @@
+{
+  "adminPassword": "admin123",
+  "timer": {
+    "active": false,
+    "endsAt": null
+  }
+}
