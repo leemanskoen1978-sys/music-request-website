@@ -453,6 +453,133 @@
 
     .voting-closed-banner.show { display: block; }
 
+    /* ===== CELEBRATION OVERLAY ===== */
+    .celebrate-overlay {
+      display: none;
+      position: fixed; inset: 0; z-index: 10000;
+      background: rgba(0,0,0,0.85);
+      backdrop-filter: blur(8px);
+      flex-direction: column;
+      align-items: center; justify-content: center;
+      cursor: default;
+    }
+
+    .celebrate-overlay.active { display: flex; }
+
+    .celebrate-canvas {
+      position: absolute; inset: 0; z-index: 0;
+      pointer-events: none;
+    }
+
+    .celebrate-content {
+      position: relative; z-index: 1;
+      text-align: center;
+      animation: celebrateIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      max-width: 90vw;
+    }
+
+    @keyframes celebrateIn {
+      0% { opacity: 0; transform: scale(0.3) rotate(-5deg); }
+      50% { transform: scale(1.08) rotate(1deg); }
+      100% { opacity: 1; transform: scale(1) rotate(0deg); }
+    }
+
+    .celebrate-emoji {
+      font-size: clamp(4rem, 12vw, 8rem);
+      animation: emojiPop 1s ease-in-out infinite alternate;
+      filter: drop-shadow(0 0 30px rgba(255,200,0,0.5));
+    }
+
+    @keyframes emojiPop {
+      0% { transform: scale(1) rotate(-3deg); }
+      100% { transform: scale(1.15) rotate(3deg); }
+    }
+
+    .celebrate-message {
+      font-family: 'Orbitron', sans-serif;
+      font-size: clamp(1.5rem, 5vw, 3.5rem);
+      font-weight: 900;
+      letter-spacing: 0.05em;
+      margin: 1rem 0;
+      padding: 0 1rem;
+      line-height: 1.3;
+      animation: textGlow 2s ease-in-out infinite alternate;
+    }
+
+    .celebrate-message.birthday {
+      background: linear-gradient(135deg, #ff6a00, #ff00ff, #00fff7, #39ff14, #ff2d95);
+      background-size: 300% 300%;
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+      animation: rainbowShift 3s ease-in-out infinite;
+    }
+
+    .celebrate-message.winner {
+      background: linear-gradient(135deg, #ffd700, #ffaa00, #fff4a0, #ffd700);
+      background-size: 200% 200%;
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+      animation: goldShift 2s ease-in-out infinite alternate;
+    }
+
+    .celebrate-message.announcement {
+      color: var(--neon-cyan);
+      text-shadow: 0 0 30px rgba(0,255,247,0.6), 0 0 60px rgba(0,255,247,0.3);
+    }
+
+    .celebrate-message.custom {
+      background: linear-gradient(135deg, var(--neon-cyan), var(--neon-magenta));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+      filter: drop-shadow(0 0 30px rgba(0,255,247,0.4));
+    }
+
+    @keyframes rainbowShift {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    @keyframes goldShift {
+      0% { background-position: 0% 50%; filter: drop-shadow(0 0 20px rgba(255,215,0,0.4)); }
+      100% { background-position: 100% 50%; filter: drop-shadow(0 0 40px rgba(255,215,0,0.7)); }
+    }
+
+    @keyframes textGlow {
+      0% { filter: drop-shadow(0 0 15px rgba(0,255,247,0.3)); }
+      100% { filter: drop-shadow(0 0 35px rgba(255,0,255,0.5)); }
+    }
+
+    .celebrate-sub {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 1.1rem;
+      color: var(--text-secondary);
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      margin-top: 0.5rem;
+      animation: fadeInUp 1s ease-out 0.5s both;
+    }
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .celebrate-sparkles {
+      position: absolute; inset: 0; z-index: 0;
+      pointer-events: none; overflow: hidden;
+    }
+
+    .sparkle {
+      position: absolute;
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      animation: sparkleFloat linear infinite;
+      pointer-events: none;
+    }
+
+    @keyframes sparkleFloat {
+      0% { transform: translateY(100vh) rotate(0deg); opacity: 1; }
+      100% { transform: translateY(-20vh) rotate(720deg); opacity: 0; }
+    }
+
     /* ===== PLAYER PANEL ===== */
     .player-panel { grid-area: player; min-height: 200px; }
     .player-panel .panel-header {
@@ -623,6 +750,17 @@
   <!-- VOTING CLOSED BANNER -->
   <div class="voting-closed-banner" id="votingClosedBanner">
     &#9888; Stemmen is gesloten!
+  </div>
+
+  <!-- CELEBRATION OVERLAY -->
+  <div class="celebrate-overlay" id="celebrateOverlay">
+    <canvas class="celebrate-canvas" id="celebrateCanvas"></canvas>
+    <div class="celebrate-sparkles" id="celebrateSparkles"></div>
+    <div class="celebrate-content">
+      <div class="celebrate-emoji" id="celebrateEmoji"></div>
+      <div class="celebrate-message" id="celebrateMessage"></div>
+      <div class="celebrate-sub" id="celebrateSub"></div>
+    </div>
   </div>
 
   <script>
@@ -960,6 +1098,15 @@
         fetchTop10();
       });
 
+      source.addEventListener('celebrate', e => {
+        const data = JSON.parse(e.data);
+        showCelebration(data.message, data.type);
+      });
+
+      source.addEventListener('celebrateStop', () => {
+        hideCelebration();
+      });
+
       source.onerror = () => {
         source.close();
         setTimeout(connectSSE, 3000);
@@ -1013,6 +1160,131 @@
       }
       draw();
     })();
+
+    // ===== CELEBRATION =====
+    let confettiAnimId = null;
+    const celebrateOverlay = document.getElementById('celebrateOverlay');
+    const celebrateCanvas = document.getElementById('celebrateCanvas');
+    const celebrateCtx = celebrateCanvas.getContext('2d');
+    const celebrateEmoji = document.getElementById('celebrateEmoji');
+    const celebrateMessage = document.getElementById('celebrateMessage');
+    const celebrateSub = document.getElementById('celebrateSub');
+    const celebrateSparkles = document.getElementById('celebrateSparkles');
+
+    const CELEBRATE_CONFIG = {
+      birthday: { emoji: '\uD83C\uDF82\uD83C\uDF89\uD83C\uDF88', sub: 'Gefeliciteerd!', colors: ['#ff6a00','#ff00ff','#00fff7','#39ff14','#ff2d95','#ffd700','#00b4ff'] },
+      winner:   { emoji: '\uD83C\uDFC6\u2B50\uD83C\uDF1F', sub: 'We hebben een winnaar!', colors: ['#ffd700','#ffaa00','#fff4a0','#ff6a00','#ffe066'] },
+      announcement: { emoji: '\uD83D\uDCE2\u2728', sub: 'Aankondiging', colors: ['#00fff7','#00b4ff','#b400ff','#ff00ff'] },
+      custom:   { emoji: '\u2728\uD83C\uDF89\u2728', sub: '', colors: ['#00fff7','#ff00ff','#b400ff','#39ff14','#ff2d95','#ffd700'] },
+    };
+
+    function showCelebration(message, type) {
+      const cfg = CELEBRATE_CONFIG[type] || CELEBRATE_CONFIG.custom;
+
+      celebrateEmoji.textContent = cfg.emoji;
+      celebrateMessage.textContent = message;
+      celebrateMessage.className = 'celebrate-message ' + type;
+      celebrateSub.textContent = cfg.sub;
+
+      celebrateOverlay.classList.add('active');
+
+      // Start confetti
+      startConfetti(cfg.colors);
+      // Sparkles
+      startSparkles(cfg.colors);
+    }
+
+    function hideCelebration() {
+      celebrateOverlay.classList.remove('active');
+      cancelAnimationFrame(confettiAnimId);
+      celebrateSparkles.innerHTML = '';
+    }
+
+    // ===== CONFETTI ENGINE =====
+    function startConfetti(colors) {
+      celebrateCanvas.width = window.innerWidth;
+      celebrateCanvas.height = window.innerHeight;
+
+      const pieces = [];
+      for (let i = 0; i < 250; i++) {
+        pieces.push({
+          x: Math.random() * celebrateCanvas.width,
+          y: Math.random() * -celebrateCanvas.height,
+          w: Math.random() * 10 + 5,
+          h: Math.random() * 6 + 3,
+          color: colors[Math.floor(Math.random() * colors.length)],
+          vx: (Math.random() - 0.5) * 4,
+          vy: Math.random() * 4 + 2,
+          rot: Math.random() * 360,
+          rotSpeed: (Math.random() - 0.5) * 12,
+          wobble: Math.random() * Math.PI * 2,
+          wobbleSpeed: Math.random() * 0.08 + 0.02,
+        });
+      }
+
+      function drawConfetti() {
+        celebrateCtx.clearRect(0, 0, celebrateCanvas.width, celebrateCanvas.height);
+
+        for (const p of pieces) {
+          p.wobble += p.wobbleSpeed;
+          p.x += p.vx + Math.sin(p.wobble) * 1.5;
+          p.y += p.vy;
+          p.rot += p.rotSpeed;
+
+          // Reset pieces that fall off
+          if (p.y > celebrateCanvas.height + 20) {
+            p.y = -20;
+            p.x = Math.random() * celebrateCanvas.width;
+          }
+
+          celebrateCtx.save();
+          celebrateCtx.translate(p.x, p.y);
+          celebrateCtx.rotate((p.rot * Math.PI) / 180);
+          celebrateCtx.fillStyle = p.color;
+          celebrateCtx.shadowBlur = 6;
+          celebrateCtx.shadowColor = p.color;
+          // Mix shapes: rectangles and circles
+          if (p.w > 10) {
+            celebrateCtx.beginPath();
+            celebrateCtx.arc(0, 0, p.h, 0, Math.PI * 2);
+            celebrateCtx.fill();
+          } else {
+            celebrateCtx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+          }
+          celebrateCtx.restore();
+        }
+
+        confettiAnimId = requestAnimationFrame(drawConfetti);
+      }
+
+      cancelAnimationFrame(confettiAnimId);
+      drawConfetti();
+    }
+
+    // ===== SPARKLE PARTICLES =====
+    function startSparkles(colors) {
+      celebrateSparkles.innerHTML = '';
+      for (let i = 0; i < 40; i++) {
+        const spark = document.createElement('div');
+        spark.className = 'sparkle';
+        spark.style.left = Math.random() * 100 + '%';
+        spark.style.background = colors[Math.floor(Math.random() * colors.length)];
+        spark.style.boxShadow = `0 0 8px ${spark.style.background}`;
+        spark.style.animationDuration = (Math.random() * 3 + 2) + 's';
+        spark.style.animationDelay = (Math.random() * 3) + 's';
+        spark.style.width = (Math.random() * 6 + 3) + 'px';
+        spark.style.height = spark.style.width;
+        celebrateSparkles.appendChild(spark);
+      }
+    }
+
+    // Resize handler for confetti canvas
+    window.addEventListener('resize', () => {
+      if (celebrateOverlay.classList.contains('active')) {
+        celebrateCanvas.width = window.innerWidth;
+        celebrateCanvas.height = window.innerHeight;
+      }
+    });
 
     // ===== INIT =====
     fetchAllSongs();

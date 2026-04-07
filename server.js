@@ -317,6 +317,26 @@ app.post('/api/admin/timer', requireAdmin, (req, res) => {
   res.status(400).json({ error: 'Geef minutes of stop op' });
 });
 
+// POST /api/admin/celebrate - trigger celebration on all screens
+app.post('/api/admin/celebrate', requireAdmin, (req, res) => {
+  const { message, type } = req.body;
+  if (!message) {
+    return res.status(400).json({ error: 'Bericht is verplicht' });
+  }
+  // type: 'birthday', 'announcement', 'winner', 'custom'
+  const celebrationType = type || 'custom';
+  console.log(`Admin: Celebration triggered — "${message}" (${celebrationType})`);
+  broadcast('celebrate', { message, type: celebrationType });
+  res.json({ success: true });
+});
+
+// POST /api/admin/celebrate/stop - dismiss celebration on all screens
+app.post('/api/admin/celebrate/stop', requireAdmin, (req, res) => {
+  broadcast('celebrateStop', {});
+  console.log('Admin: Celebration dismissed');
+  res.json({ success: true });
+});
+
 // ==========================================
 // START SERVER
 // ==========================================

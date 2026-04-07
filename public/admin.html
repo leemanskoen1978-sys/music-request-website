@@ -469,15 +469,30 @@
             <button class="btn btn-red" onclick="resetVotes()">Alle Stemmen Resetten</button>
           </div>
 
-          <!-- QUICK STATS -->
+          <!-- CELEBRATION -->
           <div class="action-card">
-            <h3 style="color: var(--neon-magenta);">&#9829; Quick Info</h3>
-            <p style="font-size:0.85rem; color:var(--text-secondary); line-height:1.6;">
-              &#8226; Gebruikers mogen max <strong style="color:var(--neon-cyan)">5 stemmen</strong><br>
-              &#8226; Gespeelde nummers verdwijnen uit de lijst<br>
-              &#8226; Real-time updates via SSE<br>
-              &#8226; Wachtwoord: wijzig in <code style="color:var(--neon-blue)">data/config.json</code>
+            <h3 style="color: #ffd700;">&#127881; Viering / Bericht</h3>
+            <p style="font-size:0.82rem; color:var(--text-secondary); margin-bottom:0.6rem;">
+              Toon een spectaculair bericht op alle schermen met confetti en vuurwerk!
             </p>
+            <div class="form-row">
+              <input class="form-input" id="celebrateMsg" placeholder="Bijv. Gefeliciteerd Sarah! &#127874;">
+            </div>
+            <div class="form-row">
+              <select class="form-select" id="celebrateType" style="flex:1">
+                <option value="birthday">&#127874; Verjaardag</option>
+                <option value="winner">&#127942; Winnaar</option>
+                <option value="announcement">&#128226; Aankondiging</option>
+                <option value="custom">&#10024; Aangepast</option>
+              </select>
+              <button class="btn btn-orange" onclick="triggerCelebration()">&#127881; Lanceer!</button>
+              <button class="btn btn-red" onclick="stopCelebration()">Stop</button>
+            </div>
+            <div style="margin-top:0.6rem; display:flex; gap:0.4rem; flex-wrap:wrap;">
+              <button class="btn btn-cyan btn-sm" onclick="quickCelebrate('&#127874; Gefeliciteerd met je verjaardag!', 'birthday')" style="font-size:0.65rem">Verjaardag</button>
+              <button class="btn btn-magenta btn-sm" onclick="quickCelebrate('&#127881; Welkom allemaal!', 'announcement')" style="font-size:0.65rem">Welkom</button>
+              <button class="btn btn-green btn-sm" onclick="quickCelebrate('&#127942; We hebben een winnaar!', 'winner')" style="font-size:0.65rem">Winnaar</button>
+            </div>
           </div>
         </div>
       </div>
@@ -762,6 +777,40 @@
     }
 
     // ===== ESCAPE =====
+    // ===== CELEBRATION =====
+    async function triggerCelebration() {
+      const message = document.getElementById('celebrateMsg').value.trim();
+      const type = document.getElementById('celebrateType').value;
+      if (!message) { toast('Vul een bericht in', true); return; }
+      try {
+        const res = await fetch('/api/admin/celebrate', {
+          method: 'POST', headers: authHeaders(),
+          body: JSON.stringify({ message, type })
+        });
+        if (res.ok) toast('Viering gelanceerd!');
+        else toast('Fout bij lanceren', true);
+      } catch (e) { toast('Fout', true); }
+    }
+
+    async function stopCelebration() {
+      try {
+        await fetch('/api/admin/celebrate/stop', {
+          method: 'POST', headers: authHeaders()
+        });
+        toast('Viering gestopt');
+      } catch (e) { toast('Fout', true); }
+    }
+
+    async function quickCelebrate(message, type) {
+      try {
+        const res = await fetch('/api/admin/celebrate', {
+          method: 'POST', headers: authHeaders(),
+          body: JSON.stringify({ message, type })
+        });
+        if (res.ok) toast('Viering gelanceerd!');
+      } catch (e) { toast('Fout', true); }
+    }
+
     function esc(str) {
       return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
                 .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
