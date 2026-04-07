@@ -774,7 +774,7 @@
   <div class="celebrate-overlay" id="celebrateOverlay">
     <canvas class="celebrate-canvas" id="celebrateCanvas"></canvas>
     <div class="celebrate-sparkles" id="celebrateSparkles"></div>
-    <button class="celebrate-close" onclick="hideCelebration()" title="Sluiten">&#10005;</button>
+    <button class="celebrate-close" onclick="hideCelebration(true)" title="Sluiten">&#10005;</button>
     <div class="celebrate-content">
       <div class="celebrate-emoji" id="celebrateEmoji"></div>
       <div class="celebrate-message" id="celebrateMessage"></div>
@@ -1119,10 +1119,11 @@
 
       source.addEventListener('celebrate', e => {
         const data = JSON.parse(e.data);
-        showCelebration(data.message, data.type);
+        if (!celebrationDismissed) showCelebration(data.message, data.type);
       });
 
       source.addEventListener('celebrateStop', () => {
+        celebrationDismissed = false;
         hideCelebration();
       });
 
@@ -1183,6 +1184,7 @@
     // ===== CELEBRATION =====
     let confettiAnimId = null;
     let celebrationActive = false;
+    let celebrationDismissed = false; // user closed it locally
     const celebrateOverlay = document.getElementById('celebrateOverlay');
     const celebrateCanvas = document.getElementById('celebrateCanvas');
     const celebrateCtx = celebrateCanvas.getContext('2d');
@@ -1196,10 +1198,12 @@
       try {
         const res = await fetch('/api/celebration');
         const data = await res.json();
-        if (data.active && !celebrationActive) {
+        if (data.active && !celebrationActive && !celebrationDismissed) {
           showCelebration(data.message, data.type);
-        } else if (!data.active && celebrationActive) {
-          hideCelebration();
+        } else if (!data.active) {
+          // Server stopped celebration — reset dismissed flag for next one
+          celebrationDismissed = false;
+          if (celebrationActive) hideCelebration();
         }
       } catch (e) { /* ignore */ }
     }
@@ -1228,9 +1232,10 @@
       startSparkles(cfg.colors);
     }
 
-    function hideCelebration() {
+    function hideCelebration(userDismissed) {
       celebrateOverlay.classList.remove('active');
       celebrationActive = false;
+      if (userDismissed) celebrationDismissed = true;
       cancelAnimationFrame(confettiAnimId);
       celebrateSparkles.innerHTML = '';
     }
