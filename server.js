@@ -17,6 +17,7 @@ const adminTokens = new Set();
 const userVotes = {}; // { userId: [songId, songId, ...] }
 const MAX_VOTES = 5;
 const sseClients = []; // SSE connections
+let activeCelebration = null; // { message, type } or null
 
 // ===== FILE HELPERS =====
 function readSongs() {
@@ -317,14 +318,19 @@ app.post('/api/admin/timer', requireAdmin, (req, res) => {
   res.status(400).json({ error: 'Geef minutes of stop op' });
 });
 
+// GET /api/celebration - current celebration state (polling fallback)
+app.get('/api/celebration', (req, res) => {
+  res.json(activeCelebration || { active: false });
+});
+
 // POST /api/admin/celebrate - trigger celebration on all screens
 app.post('/api/admin/celebrate', requireAdmin, (req, res) => {
   const { message, type } = req.body;
   if (!message) {
     return res.status(400).json({ error: 'Bericht is verplicht' });
   }
-  // type: 'birthday', 'announcement', 'winner', 'custom'
   const celebrationType = type || 'custom';
+  activeCelebration = { active: true, message, type: celebrationType };
   console.log(`Admin: Celebration triggered — "${message}" (${celebrationType})`);
   broadcast('celebrate', { message, type: celebrationType });
   res.json({ success: true });
@@ -332,6 +338,7 @@ app.post('/api/admin/celebrate', requireAdmin, (req, res) => {
 
 // POST /api/admin/celebrate/stop - dismiss celebration on all screens
 app.post('/api/admin/celebrate/stop', requireAdmin, (req, res) => {
+  activeCelebration = null;
   broadcast('celebrateStop', {});
   console.log('Admin: Celebration dismissed');
   res.json({ success: true });

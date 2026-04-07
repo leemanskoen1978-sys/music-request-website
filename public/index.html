@@ -1163,6 +1163,7 @@
 
     // ===== CELEBRATION =====
     let confettiAnimId = null;
+    let celebrationActive = false;
     const celebrateOverlay = document.getElementById('celebrateOverlay');
     const celebrateCanvas = document.getElementById('celebrateCanvas');
     const celebrateCtx = celebrateCanvas.getContext('2d');
@@ -1170,6 +1171,19 @@
     const celebrateMessage = document.getElementById('celebrateMessage');
     const celebrateSub = document.getElementById('celebrateSub');
     const celebrateSparkles = document.getElementById('celebrateSparkles');
+
+    // Poll for celebration state (fallback for SSE)
+    async function pollCelebration() {
+      try {
+        const res = await fetch('/api/celebration');
+        const data = await res.json();
+        if (data.active && !celebrationActive) {
+          showCelebration(data.message, data.type);
+        } else if (!data.active && celebrationActive) {
+          hideCelebration();
+        }
+      } catch (e) { /* ignore */ }
+    }
 
     const CELEBRATE_CONFIG = {
       birthday: { emoji: '\uD83C\uDF82\uD83C\uDF89\uD83C\uDF88', sub: 'Gefeliciteerd!', colors: ['#ff6a00','#ff00ff','#00fff7','#39ff14','#ff2d95','#ffd700','#00b4ff'] },
@@ -1187,6 +1201,7 @@
       celebrateSub.textContent = cfg.sub;
 
       celebrateOverlay.classList.add('active');
+      celebrationActive = true;
 
       // Start confetti
       startConfetti(cfg.colors);
@@ -1196,6 +1211,7 @@
 
     function hideCelebration() {
       celebrateOverlay.classList.remove('active');
+      celebrationActive = false;
       cancelAnimationFrame(confettiAnimId);
       celebrateSparkles.innerHTML = '';
     }
@@ -1291,9 +1307,11 @@
     fetchTop10();
     fetchVotesUsed();
     fetchTimer();
+    pollCelebration();
     connectSSE();
     setInterval(fetchTop10, 4000);
     setInterval(fetchTimer, 10000);
+    setInterval(pollCelebration, 3000);
   </script>
 </body>
 </html>
