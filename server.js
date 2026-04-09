@@ -48,6 +48,17 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_songs_votes ON songs(votes DESC);
 `);
 
+// ===== SCHEMA MIGRATIONS =====
+function columnExists(table, column) {
+  const cols = db.prepare(`PRAGMA table_info(${table})`).all();
+  return cols.some(c => c.name === column);
+}
+if (!columnExists('songs', 'setlistPosition')) {
+  db.exec('ALTER TABLE songs ADD COLUMN setlistPosition INTEGER DEFAULT NULL');
+  console.log('Migration: added setlistPosition column to songs');
+}
+db.exec('CREATE INDEX IF NOT EXISTS idx_songs_setlist ON songs(setlistPosition)');
+
 // ===== AUTO-MIGRATE FROM JSON =====
 function migrateFromJSON() {
   const songCount = db.prepare('SELECT COUNT(*) as count FROM songs').get().count;
@@ -98,12 +109,16 @@ const stmts = {
   allSongs: db.prepare('SELECT * FROM songs ORDER BY artist COLLATE NOCASE'),
   activeSongs: db.prepare('SELECT * FROM songs WHERE played = 0 ORDER BY artist COLLATE NOCASE'),
   top10: db.prepare('SELECT * FROM songs WHERE votes > 0 AND played = 0 ORDER BY votes DESC LIMIT 10'),
+  setlist: db.prepare('SELECT * FROM songs WHERE setlistPosition IS NOT NULL ORDER BY setlistPosition ASC'),
+  clearSetlist: db.prepare('UPDATE songs SET setlistPosition = NULL'),
+  setSetlistPosition: db.prepare('UPDATE songs SET setlistPosition = ? WHERE id = ?'),
+  removeFromSetlist: db.prepare('UPDATE songs SET setlistPosition = NULL WHERE id = ?'),
   songById: db.prepare('SELECT * FROM songs WHERE id = ?'),
   incrementVote: db.prepare('UPDATE songs SET votes = votes + 1 WHERE id = ?'),
   addVote: db.prepare('INSERT OR IGNORE INTO user_votes (userId, songId) VALUES (?, ?)'),
   userVoteCount: db.prepare('SELECT COUNT(*) as count FROM user_votes WHERE userId = ?'),
   hasUserVoted: db.prepare('SELECT 1 FROM user_votes WHERE userId = ? AND songId = ?'),
-  markPlayed: db.prepare('UPDATE songs SET played = 1 WHERE id = ?'),
+  markPlayed: db.prepare('UPDATE songs SET played = 1, setlistPosition = NULL WHERE id = ?'),
   deleteSong: db.prepare('DELETE FROM songs WHERE id = ?'),
   resetVotes: db.prepare('UPDATE songs SET votes = 0'),
   clearUserVotes: db.prepare('DELETE FROM user_votes'),
@@ -175,6 +190,12 @@ app.get('/api/songs', (req, res) => {
 
 app.get('/api/top10', (req, res) => {
   res.json(stmts.top10.all().map(songRow));
+});
+
+app.get('/api/setlist', (req, res) => {
+  const songs = stmts.setlist.all().map(songRow);
+  const nowPlayingId = parseInt(getConfig('nowPlayingId') || '0', 10) || null;
+  res.json({ songs, nowPlayingId });
 });
 
 app.post('/api/songs/:id/vote', (req, res) => {
@@ -390,10 +411,53 @@ app.post('/api/admin/songs/:id/played', requireAdmin, (req, res) => {
   if (!song) return res.status(404).json({ error: 'Song not found' });
 
   stmts.markPlayed.run(songId);
+  // If this song was the "now playing" indicator, clear it
+  if (parseInt(getConfig('nowPlayingId') || '0', 10) === songId) {
+    setConfig('nowPlayingId', '');
+    broadcast('nowPlayingUpdated', { songId: null });
+  }
   const updated = stmts.songById.get(songId);
   console.log(`Admin: Marked "${song.title}" as played`);
   broadcast('songPlayed', { id: songId, title: song.title, artist: song.artist });
+  broadcast('setlistUpdated', {});
   res.json(songRow(updated));
+});
+
+// ===== SETLIST ADMIN =====
+app.post('/api/admin/setlist', requireAdmin, (req, res) => {
+  const { songIds } = req.body;
+  if (!Array.isArray(songIds)) {
+    return res.status(400).json({ error: 'songIds moet een array zijn' });
+  }
+  // Validate all IDs exist and are not played
+  const tx = db.transaction(() => {
+    stmts.clearSetlist.run();
+    songIds.forEach((id, i) => {
+      const song = stmts.songById.get(id);
+      if (song && !song.played) stmts.setSetlistPosition.run(i, id);
+    });
+  });
+  tx();
+  console.log(`Admin: Setlist updated (${songIds.length} songs)`);
+  broadcast('setlistUpdated', {});
+  res.json({ success: true, count: songIds.length });
+});
+
+app.post('/api/admin/now-playing', requireAdmin, (req, res) => {
+  const { songId } = req.body;
+  if (songId == null || songId === '') {
+    setConfig('nowPlayingId', '');
+    broadcast('nowPlayingUpdated', { songId: null });
+    console.log('Admin: Now playing cleared');
+    return res.json({ success: true, songId: null });
+  }
+  const id = parseInt(songId, 10);
+  const song = stmts.songById.get(id);
+  if (!song) return res.status(404).json({ error: 'Song not found' });
+  setConfig('nowPlayingId', String(id));
+  broadcast('nowPlayingUpdated', { songId: id });
+  console.log(`Admin: Now playing → "${song.title}"`);
+  res.json({ success: true, songId: id });
 });
 
 app.post('/api/admin/reset-votes', requireAdmin, (req, res) => {

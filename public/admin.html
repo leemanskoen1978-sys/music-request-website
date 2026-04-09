@@ -374,6 +374,154 @@
 
     /* ===== TABLE SCROLL ===== */
     .table-scroll { max-height: 500px; overflow-y: auto; }
+
+    /* ===== SETLIST MANAGER ===== */
+    .setlist-grid {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap: 1rem;
+    }
+    @media (max-width: 800px) {
+      .setlist-grid { grid-template-columns: 1fr; }
+    }
+
+    .setlist-col {
+      background: rgba(0,0,0,0.25);
+      border: 1px solid rgba(255,255,255,0.05);
+      border-radius: 12px;
+      padding: 0.9rem;
+      max-height: 480px;
+      display: flex; flex-direction: column;
+    }
+
+    .setlist-col h3 {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.7rem; font-weight: 700;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      margin-bottom: 0.6rem;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 0.5rem;
+    }
+
+    .setlist-scroll {
+      flex: 1; overflow-y: auto;
+      display: flex; flex-direction: column; gap: 0.4rem;
+      padding-right: 0.3rem;
+    }
+
+    .setlist-row {
+      display: flex; align-items: center; gap: 0.6rem;
+      padding: 0.55rem 0.7rem; border-radius: 10px;
+      background: rgba(255,210,74,0.05);
+      border: 1px solid rgba(255,210,74,0.18);
+      cursor: grab;
+      user-select: none;
+      transition: background 0.2s, border-color 0.2s, transform 0.15s;
+    }
+    .setlist-row:hover {
+      background: rgba(255,210,74,0.1);
+      border-color: rgba(255,210,74,0.4);
+    }
+    .setlist-row.dragging {
+      opacity: 0.4;
+      cursor: grabbing;
+    }
+    .setlist-row.drag-over {
+      border-color: var(--neon-cyan);
+      background: rgba(0,255,247,0.08);
+      transform: scale(1.02);
+    }
+    .setlist-row.now-playing-row {
+      border-color: var(--neon-green);
+      background: rgba(57,255,20,0.08);
+      box-shadow: 0 0 12px rgba(57,255,20,0.2);
+    }
+
+    .setlist-row .pos {
+      font-family: 'Orbitron', sans-serif;
+      font-weight: 800; font-size: 0.95rem;
+      color: #ffd24a;
+      min-width: 1.6rem; text-align: center;
+    }
+    .setlist-row .info { flex: 1; min-width: 0; }
+    .setlist-row .info .t { font-weight: 600; font-size: 0.88rem;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .setlist-row .info .a { font-size: 0.72rem; color: var(--text-secondary);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .setlist-row .v {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.7rem; font-weight: 700;
+      color: var(--neon-magenta);
+      padding: 0.15rem 0.45rem; border-radius: 10px;
+      background: rgba(255,0,255,0.08);
+      border: 1px solid rgba(255,0,255,0.18);
+      white-space: nowrap;
+    }
+    .setlist-row .row-actions { display: flex; gap: 0.25rem; }
+    .icon-btn {
+      width: 26px; height: 26px;
+      display: inline-flex; align-items: center; justify-content: center;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 6px;
+      color: var(--text-secondary);
+      cursor: pointer; font-size: 0.85rem;
+      transition: all 0.2s;
+    }
+    .icon-btn:hover {
+      background: rgba(255,255,255,0.12);
+      color: var(--text-primary);
+    }
+    .icon-btn.live {
+      color: var(--neon-green);
+      border-color: rgba(57,255,20,0.3);
+    }
+    .icon-btn.live:hover { background: rgba(57,255,20,0.15); }
+    .icon-btn.danger { color: var(--neon-red); border-color: rgba(255,50,50,0.3); }
+    .icon-btn.danger:hover { background: rgba(255,50,50,0.15); }
+
+    .pool-row {
+      display: flex; align-items: center; gap: 0.5rem;
+      padding: 0.45rem 0.6rem; border-radius: 8px;
+      background: rgba(0,255,247,0.03);
+      border: 1px solid rgba(0,255,247,0.1);
+      transition: all 0.2s;
+    }
+    .pool-row:hover { background: rgba(0,255,247,0.07); }
+    .pool-row .info { flex: 1; min-width: 0; }
+    .pool-row .info .t { font-weight: 600; font-size: 0.82rem;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .pool-row .info .a { font-size: 0.7rem; color: var(--text-secondary);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .pool-row .v {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.68rem; font-weight: 600;
+      color: var(--text-secondary);
+    }
+
+    .pool-search {
+      width: 100%;
+      padding: 0.5rem 0.7rem;
+      background: rgba(0,255,247,0.04);
+      border: 1px solid rgba(0,255,247,0.15);
+      border-radius: 8px;
+      color: var(--text-primary);
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 0.85rem;
+      outline: none;
+      margin-bottom: 0.5rem;
+    }
+    .pool-search:focus { border-color: var(--neon-cyan); }
+
+    .empty-msg {
+      text-align: center; padding: 1.5rem 0.5rem;
+      color: var(--text-dim); font-size: 0.85rem;
+    }
+
+    .setlist-toolbar {
+      display: flex; gap: 0.4rem; flex-wrap: wrap;
+      margin-bottom: 0.6rem;
+    }
   </style>
 </head>
 <body>
@@ -498,6 +646,43 @@
       </div>
     </div>
 
+    <!-- SETLIST MANAGER -->
+    <div class="panel">
+      <div class="panel-header" style="color: #ffd24a; text-shadow: 0 0 15px rgba(255,210,74,0.4); justify-content: space-between; flex-wrap: wrap;">
+        <span>&#127908; Setlist Manager</span>
+        <span style="font-family:'Rajdhani',sans-serif; font-size:0.78rem; color: var(--text-secondary); text-transform:none; letter-spacing: 0.04em;">
+          Sleep om volgorde te bepalen &middot; klik &#9654; om "Live" te markeren
+        </span>
+      </div>
+      <div class="panel-body">
+        <div class="setlist-toolbar">
+          <button class="btn btn-cyan btn-sm" onclick="autoFillFromTop10()" title="Vervangt huidige setlist met top 10 stemmen">&#9889; Vul met Top 10</button>
+          <button class="btn btn-magenta btn-sm" onclick="sortSetlistByVotes()" title="Sorteer huidige setlist op stemmen">&#8645; Sorteer op stemmen</button>
+          <button class="btn btn-red btn-sm" onclick="clearSetlist()">&#10005; Setlist leegmaken</button>
+          <button class="btn btn-orange btn-sm" onclick="clearNowPlaying()" title="Geen nummer als 'live' markeren">&#9210; Stop "Live"</button>
+        </div>
+        <div class="setlist-grid">
+          <div class="setlist-col">
+            <h3>
+              <span style="color:#ffd24a;">&#127925; In Setlist</span>
+              <span id="setlistCount" style="color:var(--text-secondary); font-weight:500;">0 nummers</span>
+            </h3>
+            <div class="setlist-scroll" id="setlistContainer">
+              <div class="empty-msg">Nog geen nummers in de setlist.<br>Voeg ze toe vanuit de pool &rarr;</div>
+            </div>
+          </div>
+          <div class="setlist-col">
+            <h3>
+              <span style="color:var(--neon-cyan);">&#43; Beschikbare Nummers</span>
+              <span id="poolCount" style="color:var(--text-secondary); font-weight:500;">0</span>
+            </h3>
+            <input type="text" class="pool-search" id="poolSearch" placeholder="Zoek nummer..." oninput="renderPool()">
+            <div class="setlist-scroll" id="poolContainer"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- SONG TABLE -->
     <div class="panel">
       <div class="panel-header" style="color: var(--neon-cyan); text-shadow: 0 0 15px rgba(0,255,247,0.4); justify-content: space-between; flex-wrap: wrap;">
@@ -535,6 +720,9 @@
     let token = sessionStorage.getItem('adminToken');
     let adminTimerInterval = null;
     let adminTimerData = null;
+    let allSongsCache = [];
+    let setlistIds = []; // ordered list of song IDs in the setlist
+    let nowPlayingId = null;
 
     // ===== LOGIN =====
     if (token) showDashboard();
@@ -570,6 +758,7 @@
       loadAll();
       setInterval(loadStats, 5000);
       setInterval(loadTimer, 5000);
+      setInterval(loadSetlist, 6000);
     }
 
     function authHeaders() {
@@ -578,7 +767,7 @@
 
     // ===== LOAD DATA =====
     async function loadAll() {
-      await Promise.all([loadStats(), loadSongs(), loadTimer()]);
+      await Promise.all([loadStats(), loadSongs(), loadTimer(), loadSetlist()]);
     }
 
     async function loadStats() {
@@ -598,7 +787,21 @@
       try {
         const res = await fetch('/api/songs?includeAll=true');
         const songs = await res.json();
+        allSongsCache = songs;
         renderSongTable(songs);
+        renderPool();
+        renderSetlistUI();
+      } catch (e) { console.error(e); }
+    }
+
+    async function loadSetlist() {
+      try {
+        const res = await fetch('/api/setlist');
+        const data = await res.json();
+        setlistIds = (data.songs || []).map(s => s.id);
+        nowPlayingId = data.nowPlayingId || null;
+        renderSetlistUI();
+        renderPool();
       } catch (e) { console.error(e); }
     }
 
@@ -772,6 +975,212 @@
 
       tick();
       adminTimerInterval = setInterval(tick, 1000);
+    }
+
+    // ===== SETLIST MANAGER =====
+    function songById(id) {
+      return allSongsCache.find(s => s.id === id);
+    }
+
+    function renderSetlistUI() {
+      const container = document.getElementById('setlistContainer');
+      const countEl = document.getElementById('setlistCount');
+      if (!container) return;
+
+      const songs = setlistIds.map(songById).filter(Boolean);
+      countEl.textContent = `${songs.length} nummer${songs.length === 1 ? '' : 's'}`;
+
+      if (songs.length === 0) {
+        container.innerHTML = '<div class="empty-msg">Nog geen nummers in de setlist.<br>Voeg ze toe vanuit de pool &rarr;</div>';
+        return;
+      }
+
+      container.innerHTML = songs.map((s, i) => `
+        <div class="setlist-row ${s.id === nowPlayingId ? 'now-playing-row' : ''}"
+             draggable="true" data-id="${s.id}">
+          <span class="pos">${String(i + 1).padStart(2, '0')}</span>
+          <div class="info">
+            <div class="t">${esc(s.title)}</div>
+            <div class="a">${esc(s.artist)}</div>
+          </div>
+          <span class="v">${s.votes} &#9829;</span>
+          <div class="row-actions">
+            <button class="icon-btn live" onclick="setNowPlaying(${s.id})" title="${s.id === nowPlayingId ? 'Speelt nu' : 'Markeer als nu spelend'}">${s.id === nowPlayingId ? '&#9632;' : '&#9654;'}</button>
+            <button class="icon-btn" onclick="moveSetlist(${s.id}, -1)" title="Omhoog">&#8593;</button>
+            <button class="icon-btn" onclick="moveSetlist(${s.id}, 1)" title="Omlaag">&#8595;</button>
+            <button class="icon-btn danger" onclick="removeFromSetlist(${s.id})" title="Verwijder uit setlist">&#10005;</button>
+          </div>
+        </div>
+      `).join('');
+
+      attachDragHandlers(container);
+    }
+
+    function renderPool() {
+      const container = document.getElementById('poolContainer');
+      const countEl = document.getElementById('poolCount');
+      if (!container) return;
+
+      const search = (document.getElementById('poolSearch')?.value || '').toLowerCase().trim();
+      const inSetlist = new Set(setlistIds);
+      let pool = allSongsCache.filter(s => !s.played && !inSetlist.has(s.id));
+      if (search) {
+        pool = pool.filter(s =>
+          s.title.toLowerCase().includes(search) || s.artist.toLowerCase().includes(search)
+        );
+      }
+      // Sort by votes desc, then artist
+      pool.sort((a, b) => b.votes - a.votes || a.artist.localeCompare(b.artist));
+
+      countEl.textContent = `${pool.length}`;
+
+      if (pool.length === 0) {
+        container.innerHTML = '<div class="empty-msg">Geen beschikbare nummers</div>';
+        return;
+      }
+
+      container.innerHTML = pool.map(s => `
+        <div class="pool-row">
+          <div class="info">
+            <div class="t">${esc(s.title)}</div>
+            <div class="a">${esc(s.artist)}</div>
+          </div>
+          <span class="v">${s.votes} &#9829;</span>
+          <button class="icon-btn live" onclick="addToSetlist(${s.id})" title="Voeg toe aan setlist">&#43;</button>
+        </div>
+      `).join('');
+    }
+
+    // ===== DRAG & DROP =====
+    let dragId = null;
+    function attachDragHandlers(container) {
+      const rows = container.querySelectorAll('.setlist-row');
+      rows.forEach(row => {
+        row.addEventListener('dragstart', e => {
+          dragId = parseInt(row.dataset.id, 10);
+          row.classList.add('dragging');
+          e.dataTransfer.effectAllowed = 'move';
+        });
+        row.addEventListener('dragend', () => {
+          row.classList.remove('dragging');
+          rows.forEach(r => r.classList.remove('drag-over'));
+          dragId = null;
+        });
+        row.addEventListener('dragover', e => {
+          e.preventDefault();
+          e.dataTransfer.dropEffect = 'move';
+          if (parseInt(row.dataset.id, 10) !== dragId) row.classList.add('drag-over');
+        });
+        row.addEventListener('dragleave', () => row.classList.remove('drag-over'));
+        row.addEventListener('drop', e => {
+          e.preventDefault();
+          row.classList.remove('drag-over');
+          const targetId = parseInt(row.dataset.id, 10);
+          if (dragId == null || targetId === dragId) return;
+          const from = setlistIds.indexOf(dragId);
+          const to = setlistIds.indexOf(targetId);
+          if (from < 0 || to < 0) return;
+          setlistIds.splice(from, 1);
+          setlistIds.splice(to, 0, dragId);
+          saveSetlist();
+        });
+      });
+    }
+
+    async function saveSetlist() {
+      renderSetlistUI();
+      try {
+        await fetch('/api/admin/setlist', {
+          method: 'POST',
+          headers: authHeaders(),
+          body: JSON.stringify({ songIds: setlistIds })
+        });
+      } catch (e) { toast('Fout bij opslaan setlist', true); }
+    }
+
+    function addToSetlist(id) {
+      if (setlistIds.includes(id)) return;
+      setlistIds.push(id);
+      renderSetlistUI();
+      renderPool();
+      saveSetlist();
+    }
+
+    function removeFromSetlist(id) {
+      setlistIds = setlistIds.filter(x => x !== id);
+      if (nowPlayingId === id) nowPlayingId = null;
+      renderSetlistUI();
+      renderPool();
+      saveSetlist();
+    }
+
+    function moveSetlist(id, dir) {
+      const i = setlistIds.indexOf(id);
+      if (i < 0) return;
+      const j = i + dir;
+      if (j < 0 || j >= setlistIds.length) return;
+      [setlistIds[i], setlistIds[j]] = [setlistIds[j], setlistIds[i]];
+      saveSetlist();
+    }
+
+    function clearSetlist() {
+      if (!confirm('Setlist helemaal leegmaken?')) return;
+      setlistIds = [];
+      renderSetlistUI();
+      renderPool();
+      saveSetlist();
+      toast('Setlist leeggemaakt');
+    }
+
+    function sortSetlistByVotes() {
+      const songs = setlistIds.map(songById).filter(Boolean);
+      songs.sort((a, b) => b.votes - a.votes);
+      setlistIds = songs.map(s => s.id);
+      saveSetlist();
+      toast('Setlist gesorteerd op stemmen');
+    }
+
+    async function autoFillFromTop10() {
+      try {
+        const res = await fetch('/api/top10');
+        const top = await res.json();
+        if (top.length === 0) { toast('Geen stemmen om te gebruiken', true); return; }
+        if (setlistIds.length > 0 && !confirm('Huidige setlist vervangen door top 10?')) return;
+        setlistIds = top.map(s => s.id);
+        saveSetlist();
+        toast(`Setlist gevuld met top ${top.length}`);
+      } catch (e) { toast('Fout bij ophalen top 10', true); }
+    }
+
+    async function setNowPlaying(id) {
+      // Toggle: clicking the active one again clears it
+      const newId = nowPlayingId === id ? null : id;
+      try {
+        const res = await fetch('/api/admin/now-playing', {
+          method: 'POST',
+          headers: authHeaders(),
+          body: JSON.stringify({ songId: newId })
+        });
+        if (res.ok) {
+          nowPlayingId = newId;
+          renderSetlistUI();
+          toast(newId ? 'Live markering bijgewerkt' : 'Live markering gestopt');
+        }
+      } catch (e) { toast('Fout', true); }
+    }
+
+    async function clearNowPlaying() {
+      try {
+        const res = await fetch('/api/admin/now-playing', {
+          method: 'POST', headers: authHeaders(),
+          body: JSON.stringify({ songId: null })
+        });
+        if (res.ok) {
+          nowPlayingId = null;
+          renderSetlistUI();
+          toast('Live markering gestopt');
+        }
+      } catch (e) { toast('Fout', true); }
     }
 
     // ===== TOAST =====

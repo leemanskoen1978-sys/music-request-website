@@ -7,6 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <style>
     *, *::before, *::after {
       margin: 0;
@@ -21,20 +22,27 @@
       --neon-pink: #ff2d95;
       --neon-blue: #00b4ff;
       --neon-green: #39ff14;
-      --bg-dark: #0a0a12;
-      --bg-darker: #060609;
-      --panel-bg: rgba(10, 10, 24, 0.8);
-      --panel-border: rgba(0, 255, 247, 0.15);
-      --text-primary: #e8e8f0;
-      --text-secondary: #8888aa;
-      --text-dim: #555570;
+      --party-gold: #ffd24a;
+      --party-orange: #ff7a1a;
+      --party-red: #ff2960;
+      --bg-dark: #0a0612;
+      --bg-darker: #050308;
+      --panel-bg: rgba(14, 8, 24, 0.78);
+      --panel-border: rgba(255, 122, 26, 0.2);
+      --text-primary: #f4eef6;
+      --text-secondary: #b9a8c4;
+      --text-dim: #6a5d76;
     }
 
     html { scrollbar-width: thin; scrollbar-color: var(--neon-cyan) var(--bg-darker); }
 
     body {
       font-family: 'Rajdhani', sans-serif;
-      background: var(--bg-dark);
+      background:
+        radial-gradient(ellipse at 50% 110%, #2a0a2e 0%, transparent 60%),
+        radial-gradient(ellipse at 0% 0%, #1a0a24 0%, transparent 55%),
+        radial-gradient(ellipse at 100% 0%, #240a18 0%, transparent 55%),
+        var(--bg-dark);
       color: var(--text-primary);
       min-height: 100vh;
       overflow-x: hidden;
@@ -43,20 +51,78 @@
 
     ::-webkit-scrollbar { width: 6px; }
     ::-webkit-scrollbar-track { background: var(--bg-darker); }
-    ::-webkit-scrollbar-thumb { background: var(--neon-cyan); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb { background: var(--party-orange); border-radius: 3px; }
 
     #particles {
       position: fixed; top: 0; left: 0; width: 100%; height: 100%;
       z-index: 0; pointer-events: none;
     }
 
+    /* Stage lighting glow */
     body::before {
       content: '';
       position: fixed; top: -50%; left: -50%; width: 200%; height: 200%;
-      background: radial-gradient(ellipse at 30% 20%, rgba(0,255,247,0.03) 0%, transparent 50%),
-                  radial-gradient(ellipse at 70% 80%, rgba(255,0,255,0.03) 0%, transparent 50%),
-                  radial-gradient(ellipse at 50% 50%, rgba(180,0,255,0.02) 0%, transparent 40%);
+      background:
+        radial-gradient(ellipse at 20% 0%, rgba(255,122,26,0.10) 0%, transparent 45%),
+        radial-gradient(ellipse at 80% 0%, rgba(255,41,96,0.10) 0%, transparent 45%),
+        radial-gradient(ellipse at 50% 100%, rgba(180,0,255,0.08) 0%, transparent 55%),
+        radial-gradient(ellipse at 30% 60%, rgba(0,255,247,0.04) 0%, transparent 50%);
       z-index: 0; pointer-events: none;
+    }
+
+    /* Animated spotlight beams from above (stage feel) */
+    .stage-lights {
+      position: fixed; inset: 0; pointer-events: none; z-index: 1;
+      overflow: hidden; mix-blend-mode: screen;
+    }
+    .stage-lights .beam {
+      position: absolute; top: -10%; left: 50%;
+      width: 280px; height: 130%;
+      transform-origin: top center;
+      background: linear-gradient(180deg,
+        rgba(255,122,26,0.18) 0%,
+        rgba(255,122,26,0.05) 40%,
+        transparent 75%);
+      filter: blur(28px);
+      opacity: 0.85;
+    }
+    .stage-lights .beam.b1 { animation: sweepA 9s ease-in-out infinite; }
+    .stage-lights .beam.b2 {
+      background: linear-gradient(180deg,
+        rgba(255,41,96,0.16) 0%,
+        rgba(255,41,96,0.05) 40%,
+        transparent 75%);
+      animation: sweepB 11s ease-in-out infinite;
+    }
+    .stage-lights .beam.b3 {
+      background: linear-gradient(180deg,
+        rgba(180,0,255,0.18) 0%,
+        rgba(180,0,255,0.04) 40%,
+        transparent 75%);
+      animation: sweepC 13s ease-in-out infinite;
+    }
+    .stage-lights .beam.b4 {
+      background: linear-gradient(180deg,
+        rgba(255,210,74,0.14) 0%,
+        rgba(255,210,74,0.04) 40%,
+        transparent 75%);
+      animation: sweepD 8s ease-in-out infinite;
+    }
+    @keyframes sweepA {
+      0%,100% { transform: translateX(-30%) rotate(-22deg); }
+      50% { transform: translateX(-10%) rotate(18deg); }
+    }
+    @keyframes sweepB {
+      0%,100% { transform: translateX(15%) rotate(20deg); }
+      50% { transform: translateX(-15%) rotate(-18deg); }
+    }
+    @keyframes sweepC {
+      0%,100% { transform: translateX(-50%) rotate(8deg); }
+      50% { transform: translateX(-50%) rotate(-12deg); }
+    }
+    @keyframes sweepD {
+      0%,100% { transform: translateX(25%) rotate(-15deg); }
+      50% { transform: translateX(40%) rotate(15deg); }
     }
 
     /* ===== COUNTDOWN TIMER BAR ===== */
@@ -126,16 +192,16 @@
       font-family: 'Orbitron', sans-serif;
       font-size: clamp(1.8rem, 5vw, 3.2rem);
       font-weight: 900; letter-spacing: 0.15em; text-transform: uppercase;
-      background: linear-gradient(135deg, var(--neon-cyan), var(--neon-magenta), var(--neon-purple));
+      background: linear-gradient(135deg, var(--party-gold), var(--party-orange), var(--party-red), var(--neon-magenta));
       -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
-      filter: drop-shadow(0 0 30px rgba(0,255,247,0.3));
+      filter: drop-shadow(0 0 30px rgba(255,122,26,0.4));
       animation: logoGlow 4s ease-in-out infinite alternate;
     }
 
     @keyframes logoGlow {
-      0% { filter: drop-shadow(0 0 20px rgba(0,255,247,0.3)); }
-      50% { filter: drop-shadow(0 0 40px rgba(255,0,255,0.4)); }
-      100% { filter: drop-shadow(0 0 20px rgba(180,0,255,0.3)); }
+      0% { filter: drop-shadow(0 0 20px rgba(255,210,74,0.4)); }
+      50% { filter: drop-shadow(0 0 40px rgba(255,41,96,0.5)); }
+      100% { filter: drop-shadow(0 0 20px rgba(180,0,255,0.4)); }
     }
 
     .subtitle {
@@ -171,9 +237,9 @@
       display: grid;
       grid-template-columns: 1fr 1fr;
       grid-template-rows: auto auto;
-      grid-template-areas: "top10 songlist" "player player";
-      gap: 1.2rem; padding: 1rem 1.5rem 2rem;
-      max-width: 1400px; margin: 0 auto;
+      grid-template-areas: "top10 songlist" "setlist setlist";
+      gap: 1.5rem; padding: 1rem 2rem 2rem;
+      max-width: 1700px; margin: 0 auto;
       padding-bottom: 1.5rem;
     }
 
@@ -203,7 +269,7 @@
     .panel-header .icon { font-size: 1.1rem; }
 
     /* ===== TOP 10 PANEL ===== */
-    .top10-panel { grid-area: top10; max-height: 560px; overflow-y: auto; }
+    .top10-panel { grid-area: top10; max-height: 640px; overflow-y: auto; }
     .top10-panel .panel-header {
       color: var(--neon-magenta);
       text-shadow: 0 0 20px rgba(255,0,255,0.5);
@@ -257,7 +323,7 @@
     .top10-empty .empty-icon { font-size: 2.5rem; display: block; margin-bottom: 0.8rem; opacity: 0.4; }
 
     /* ===== SONG LIST PANEL ===== */
-    .songlist-panel { grid-area: songlist; max-height: 560px; display: flex; flex-direction: column; }
+    .songlist-panel { grid-area: songlist; max-height: 640px; display: flex; flex-direction: column; }
     .songlist-panel .panel-header {
       color: var(--neon-cyan);
       text-shadow: 0 0 20px rgba(0,255,247,0.5);
@@ -599,72 +665,207 @@
       100% { transform: translateY(-20vh) rotate(720deg); opacity: 0; }
     }
 
-    /* ===== PLAYER PANEL ===== */
-    .player-panel { grid-area: player; }
-    .player-panel .panel-header {
-      color: var(--neon-purple);
-      text-shadow: 0 0 20px rgba(180,0,255,0.5);
-      padding: 0.8rem 1.2rem 0.5rem;
-      font-size: 0.75rem;
+    /* ===== SETLIST PANEL ===== */
+    .setlist-panel {
+      grid-area: setlist;
+      border: 1px solid rgba(255, 210, 74, 0.25);
+      box-shadow: 0 0 30px rgba(255, 122, 26, 0.08), inset 0 0 30px rgba(255, 210, 74, 0.02);
+    }
+    .setlist-panel::before {
+      background: linear-gradient(90deg, transparent, var(--party-gold), var(--party-orange), var(--party-gold), transparent);
+      opacity: 0.7;
+      height: 2px;
+    }
+    .setlist-panel .panel-header {
+      color: var(--party-gold);
+      text-shadow: 0 0 24px rgba(255,210,74,0.6);
+      padding: 1.5rem 2rem 0.8rem;
+      font-size: 1.15rem;
+      letter-spacing: 0.18em;
+      justify-content: space-between;
+      align-items: baseline;
+    }
+    .setlist-panel .panel-header .icon { font-size: 1.5rem; }
+
+    .setlist-meta {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 0.95rem; font-weight: 600;
+      color: var(--text-secondary);
+      letter-spacing: 0.05em;
+      text-transform: none;
+    }
+    .setlist-meta strong {
+      color: var(--party-gold);
+      font-weight: 800;
+      text-shadow: 0 0 10px rgba(255,210,74,0.4);
     }
 
-    .player-container { padding: 0 1rem 1rem; }
+    .setlist-container { padding: 0.4rem 1.5rem 1.8rem; }
 
-    .player-placeholder {
-      display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-      height: 160px;
-      border: 2px dashed rgba(180,0,255,0.2);
-      border-radius: 12px; color: var(--text-dim); gap: 0.5rem;
+    .setlist-empty {
+      text-align: center; padding: 3.5rem 1rem;
+      color: var(--text-dim); font-size: 1.05rem;
+    }
+    .setlist-empty .empty-icon { font-size: 3rem; display: block; margin-bottom: 1rem; opacity: 0.4; }
+
+    .setlist-list {
+      list-style: none; display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+      gap: 0.8rem;
     }
 
-    .player-placeholder .play-icon {
-      font-size: 2rem; opacity: 0.3;
-      animation: placeholderPulse 3s ease-in-out infinite;
+    .setlist-item {
+      display: flex; align-items: center; gap: 1rem;
+      padding: 1rem 1.2rem; border-radius: 14px;
+      background: rgba(255,122,26,0.05);
+      border: 1px solid rgba(255,122,26,0.15);
+      transition: all 0.3s ease;
+      position: relative; overflow: hidden;
+      min-height: 72px;
+    }
+    .setlist-item:hover {
+      background: rgba(255,122,26,0.1);
+      border-color: rgba(255,122,26,0.35);
+      transform: translateY(-2px);
     }
 
-    @keyframes placeholderPulse {
-      0%, 100% { opacity: 0.2; transform: scale(1); }
-      50% { opacity: 0.4; transform: scale(1.1); }
+    .setlist-item.played {
+      opacity: 0.4;
+      background: rgba(255,255,255,0.02);
+    }
+    .setlist-item.played .setlist-title { text-decoration: line-through; }
+
+    .setlist-item.now-playing {
+      background: linear-gradient(90deg, rgba(255,210,74,0.20), rgba(255,122,26,0.12));
+      border-color: var(--party-gold);
+      box-shadow: 0 0 30px rgba(255,210,74,0.3), inset 0 0 25px rgba(255,210,74,0.06);
+      animation: nowPlayingPulse 2s ease-in-out infinite alternate;
     }
 
-    .player-placeholder p { font-size: 0.9rem; letter-spacing: 0.1em; }
-
-    .youtube-wrapper {
-      position: relative; padding-bottom: 40%; height: 0;
-      border-radius: 10px; overflow: hidden;
-      box-shadow: 0 0 20px rgba(180,0,255,0.12);
-      max-width: 640px; margin: 0 auto;
-    }
-    .youtube-wrapper iframe {
-      position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none;
+    @keyframes nowPlayingPulse {
+      from { box-shadow: 0 0 22px rgba(255,210,74,0.22), inset 0 0 18px rgba(255,210,74,0.05); }
+      to { box-shadow: 0 0 42px rgba(255,210,74,0.5), inset 0 0 28px rgba(255,210,74,0.1); }
     }
 
-    .now-playing { display: flex; align-items: center; gap: 0.8rem; padding: 0.8rem 0 0; }
-
-    .now-playing-label {
+    .setlist-pos {
       font-family: 'Orbitron', sans-serif;
-      font-size: 0.65rem; font-weight: 600;
-      letter-spacing: 0.15em; text-transform: uppercase;
-      color: var(--neon-purple);
-      text-shadow: 0 0 10px rgba(180,0,255,0.5);
+      font-weight: 900; font-size: 1.7rem;
+      min-width: 2.6rem; text-align: center;
+      color: var(--party-orange);
+      text-shadow: 0 0 14px rgba(255,122,26,0.5);
     }
-    .now-playing-title { font-weight: 600; font-size: 1rem; }
-    .now-playing-artist { font-size: 0.85rem; color: var(--text-secondary); }
+    .setlist-item.now-playing .setlist-pos {
+      color: var(--party-gold);
+      text-shadow: 0 0 18px rgba(255,210,74,0.8);
+    }
 
-    .equalizer { display: flex; align-items: flex-end; gap: 2px; height: 16px; }
-    .eq-bar {
-      width: 3px; background: var(--neon-purple); border-radius: 2px;
-      animation: eqBounce 0.8s ease-in-out infinite alternate;
-      box-shadow: 0 0 4px rgba(180,0,255,0.5);
+    .setlist-info { flex: 1; min-width: 0; }
+    .setlist-title { font-weight: 700; font-size: 1.1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.25; }
+    .setlist-artist { font-size: 0.92rem; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 0.15rem; }
+
+    .setlist-votes {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.9rem; font-weight: 700;
+      color: var(--neon-magenta);
+      text-shadow: 0 0 12px rgba(255,0,255,0.6);
+      white-space: nowrap;
+      padding: 0.4rem 0.75rem;
+      border-radius: 14px;
+      background: rgba(255,0,255,0.1);
+      border: 1px solid rgba(255,0,255,0.25);
     }
-    .eq-bar:nth-child(1) { height: 8px; animation-delay: 0s; }
-    .eq-bar:nth-child(2) { height: 14px; animation-delay: 0.15s; }
-    .eq-bar:nth-child(3) { height: 6px; animation-delay: 0.3s; }
-    .eq-bar:nth-child(4) { height: 12px; animation-delay: 0.1s; }
-    .eq-bar:nth-child(5) { height: 10px; animation-delay: 0.25s; }
+
+    .now-playing-badge {
+      position: absolute; top: 0.5rem; right: 0.8rem;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.62rem; font-weight: 800;
+      letter-spacing: 0.15em; text-transform: uppercase;
+      color: var(--party-gold);
+      text-shadow: 0 0 10px rgba(255,210,74,0.8);
+      display: flex; align-items: center; gap: 0.4rem;
+      padding: 0.2rem 0.5rem;
+      background: rgba(0,0,0,0.4);
+      border-radius: 10px;
+      backdrop-filter: blur(4px);
+    }
+
+    .live-equalizer { display: inline-flex; align-items: flex-end; gap: 2px; height: 12px; }
+    .live-equalizer .eq-bar {
+      width: 2.5px; background: var(--party-gold); border-radius: 2px;
+      animation: eqBounce 0.7s ease-in-out infinite alternate;
+      box-shadow: 0 0 5px rgba(255,210,74,0.8);
+    }
+    .live-equalizer .eq-bar:nth-child(1) { height: 5px; animation-delay: 0s; }
+    .live-equalizer .eq-bar:nth-child(2) { height: 11px; animation-delay: 0.15s; }
+    .live-equalizer .eq-bar:nth-child(3) { height: 6px; animation-delay: 0.3s; }
+    .live-equalizer .eq-bar:nth-child(4) { height: 9px; animation-delay: 0.1s; }
 
     @keyframes eqBounce { 0% { transform: scaleY(0.4); } 100% { transform: scaleY(1); } }
+
+    /* ===== QR CODE OVERLAY ===== */
+    .qr-overlay {
+      position: fixed;
+      bottom: 1.2rem; right: 1.2rem;
+      z-index: 90;
+      background: rgba(10, 6, 18, 0.92);
+      border: 1px solid rgba(255, 210, 74, 0.35);
+      border-radius: 14px;
+      padding: 0.8rem 0.8rem 0.6rem;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 0 25px rgba(255, 122, 26, 0.15), 0 8px 24px rgba(0,0,0,0.4);
+      text-align: center;
+      transition: all 0.3s ease;
+    }
+    .qr-overlay:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 0 35px rgba(255, 210, 74, 0.3), 0 10px 30px rgba(0,0,0,0.5);
+      border-color: var(--party-gold);
+    }
+    .qr-overlay .qr-code {
+      width: 120px; height: 120px;
+      background: #fff;
+      padding: 6px;
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .qr-overlay .qr-code img,
+    .qr-overlay .qr-code canvas {
+      display: block; width: 100%; height: 100%;
+    }
+    .qr-overlay .qr-label {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.6rem; font-weight: 700;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--party-gold);
+      text-shadow: 0 0 8px rgba(255,210,74,0.5);
+      margin-top: 0.55rem;
+    }
+    .qr-toggle {
+      position: absolute;
+      top: -10px; right: -10px;
+      width: 24px; height: 24px;
+      border-radius: 50%;
+      background: rgba(10, 6, 18, 0.95);
+      border: 1px solid rgba(255, 210, 74, 0.4);
+      color: var(--party-gold);
+      font-size: 0.75rem;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.2s;
+    }
+    .qr-toggle:hover { background: rgba(255, 210, 74, 0.2); }
+    .qr-overlay.collapsed .qr-code,
+    .qr-overlay.collapsed .qr-label { display: none; }
+    .qr-overlay.collapsed {
+      padding: 0.5rem 0.8rem;
+    }
+    .qr-overlay.collapsed::before {
+      content: '\1F4F1  Scan';
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.7rem; font-weight: 700;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--party-gold);
+    }
 
     .song-count {
       font-family: 'Rajdhani', sans-serif;
@@ -684,7 +885,7 @@
 
       .grid-container {
         grid-template-columns: 1fr;
-        grid-template-areas: "top10" "songlist" "player";
+        grid-template-areas: "top10" "songlist" "setlist";
         padding: 0.6rem;
         gap: 0.8rem;
       }
@@ -713,16 +914,27 @@
       .top10-artist { font-size: 0.72rem; }
       .top10-votes { font-size: 0.65rem; }
 
-      .player-panel .panel-header { padding: 0.6rem 0.8rem 0.4rem; font-size: 0.68rem; }
-      .player-container { padding: 0 0.8rem 0.8rem; }
-      .player-placeholder { height: 100px; }
-      .player-placeholder .play-icon { font-size: 1.5rem; }
-      .player-placeholder p { font-size: 0.8rem; }
-      .youtube-wrapper { padding-bottom: 50%; max-width: 100%; }
-      .now-playing { padding: 0.5rem 0 0; gap: 0.5rem; }
-      .now-playing-label { font-size: 0.55rem; }
-      .now-playing-title { font-size: 0.85rem; }
-      .now-playing-artist { font-size: 0.75rem; }
+      .setlist-panel .panel-header { padding: 0.9rem 1rem 0.5rem; font-size: 0.85rem; }
+      .setlist-panel .panel-header .icon { font-size: 1.1rem; }
+      .setlist-meta { font-size: 0.75rem; }
+      .setlist-container { padding: 0.2rem 0.6rem 1rem; }
+      .setlist-list { grid-template-columns: 1fr; gap: 0.5rem; }
+      .setlist-item { padding: 0.65rem 0.8rem; gap: 0.7rem; min-height: 60px; }
+      .setlist-pos { font-size: 1.2rem; min-width: 1.8rem; }
+      .setlist-title { font-size: 0.92rem; }
+      .setlist-artist { font-size: 0.78rem; }
+      .setlist-votes { font-size: 0.72rem; padding: 0.25rem 0.55rem; }
+      .now-playing-badge { font-size: 0.55rem; top: 0.3rem; right: 0.4rem; padding: 0.15rem 0.4rem; }
+
+      .grid-container { padding: 0.6rem; }
+
+      /* QR overlay: collapse on mobile to a small badge */
+      .qr-overlay {
+        bottom: 0.6rem; right: 0.6rem;
+        padding: 0.5rem 0.7rem;
+      }
+      .qr-overlay .qr-code { width: 70px; height: 70px; padding: 4px; }
+      .qr-overlay .qr-label { font-size: 0.5rem; margin-top: 0.35rem; }
 
       .timer-bar { padding: 0.4rem 1rem; }
       .timer-bar .timer-label { font-size: 0.6rem; }
@@ -746,7 +958,7 @@
     .panel { opacity: 0; transform: translateY(20px); animation: panelIn 0.6s ease-out forwards; }
     .top10-panel { animation-delay: 0.1s; }
     .songlist-panel { animation-delay: 0.2s; }
-    .player-panel { animation-delay: 0.3s; }
+    .setlist-panel { animation-delay: 0.3s; }
 
     @keyframes panelIn { to { opacity: 1; transform: translateY(0); } }
 
@@ -759,6 +971,12 @@
 </head>
 <body>
   <canvas id="particles"></canvas>
+  <div class="stage-lights" aria-hidden="true">
+    <div class="beam b1"></div>
+    <div class="beam b2"></div>
+    <div class="beam b3"></div>
+    <div class="beam b4"></div>
+  </div>
 
   <!-- COUNTDOWN TIMER BAR -->
   <div class="timer-bar" id="timerBar">
@@ -813,20 +1031,29 @@
       <div class="song-list-container" id="songListContainer"></div>
     </section>
 
-    <!-- PLAYER PANEL -->
-    <section class="panel player-panel">
+    <!-- SETLIST PANEL -->
+    <section class="panel setlist-panel">
       <div class="panel-header">
-        <span class="icon">&#9654;</span>
-        Nu Luisteren
+        <span><span class="icon">&#127908;</span> Setlist Vanavond</span>
+        <span class="setlist-meta" id="setlistMeta"></span>
       </div>
-      <div class="player-container" id="playerContainer">
-        <div class="player-placeholder">
-          <span class="play-icon">&#9654;</span>
-          <p>Selecteer een nummer om te luisteren</p>
-        </div>
+      <div class="setlist-container">
+        <ul class="setlist-list" id="setlistList">
+          <li class="setlist-empty" style="grid-column: 1 / -1;">
+            <span class="empty-icon">&#127925;</span>
+            De setlist wordt nog samengesteld...
+          </li>
+        </ul>
       </div>
     </section>
   </main>
+
+  <!-- QR CODE OVERLAY -->
+  <div class="qr-overlay" id="qrOverlay" title="Scan om mee te stemmen">
+    <button class="qr-toggle" id="qrToggle" title="Verberg/toon">&minus;</button>
+    <div class="qr-code" id="qrCode"></div>
+    <div class="qr-label">Scan om te stemmen</div>
+  </div>
 
   <!-- VOTING CLOSED BANNER -->
   <div class="voting-closed-banner" id="votingClosedBanner">
@@ -856,7 +1083,7 @@
     // ===== STATE =====
     let allSongs = [];
     let top10 = [];
-    let currentVideoId = null;
+    let setlistData = { songs: [], nowPlayingId: null };
     let votesUsed = 0;
     const MAX_VOTES = 5;
     let activeGenre = 'all';
@@ -870,7 +1097,8 @@
     const songListContainer = document.getElementById('songListContainer');
     const songCount = document.getElementById('songCount');
     const searchInput = document.getElementById('searchInput');
-    const playerContainer = document.getElementById('playerContainer');
+    const setlistList = document.getElementById('setlistList');
+    const setlistMeta = document.getElementById('setlistMeta');
     const voteCounter = document.getElementById('voteCounter');
     const voteHearts = document.getElementById('voteHearts');
     const voteCountText = document.getElementById('voteCountText');
@@ -900,6 +1128,14 @@
         top10 = await res.json();
         renderTop10(top10);
       } catch (e) { console.error('Failed to fetch top 10:', e); }
+    }
+
+    async function fetchSetlist() {
+      try {
+        const res = await fetch('/api/setlist');
+        setlistData = await res.json();
+        renderSetlist();
+      } catch (e) { console.error('Failed to fetch setlist:', e); }
     }
 
     async function fetchVotesUsed() {
@@ -942,6 +1178,7 @@
         showVoteBurst(btn);
 
         fetchTop10();
+        fetchSetlist();
         if (votesUsed >= MAX_VOTES) applyFilters();
       } catch (e) { console.error('Vote failed:', e); }
     }
@@ -969,7 +1206,7 @@
       }
 
       top10List.innerHTML = songs.map((song, i) => `
-        <li class="top10-item" onclick="playSong('${song.youtubeId}', '${esc(song.title)}', '${esc(song.artist)}')" title="Klik om te luisteren">
+        <li class="top10-item">
           <span class="top10-rank">${i + 1}</span>
           <div class="top10-info">
             <div class="top10-title">${esc(song.title)}</div>
@@ -978,6 +1215,50 @@
           <span class="top10-votes">${song.votes} &#9829;</span>
         </li>
       `).join('');
+    }
+
+    // ===== RENDER: SETLIST =====
+    function renderSetlist() {
+      const songs = setlistData.songs || [];
+      const nowPlayingId = setlistData.nowPlayingId;
+
+      if (songs.length === 0) {
+        setlistList.innerHTML = `
+          <li class="setlist-empty" style="grid-column: 1 / -1;">
+            <span class="empty-icon">&#127925;</span>
+            De setlist wordt nog samengesteld...
+          </li>`;
+        setlistMeta.textContent = '';
+        return;
+      }
+
+      const remaining = songs.filter(s => !s.played).length;
+      setlistMeta.innerHTML = `<strong>${remaining}</strong> van <strong>${songs.length}</strong> nog te spelen`;
+
+      setlistList.innerHTML = songs.map((song, i) => {
+        const isNow = song.id === nowPlayingId;
+        const cls = ['setlist-item'];
+        if (song.played) cls.push('played');
+        if (isNow) cls.push('now-playing');
+        return `
+          <li class="${cls.join(' ')}">
+            ${isNow ? `
+              <span class="now-playing-badge">
+                <span class="live-equalizer">
+                  <span class="eq-bar"></span><span class="eq-bar"></span>
+                  <span class="eq-bar"></span><span class="eq-bar"></span>
+                </span>
+                Live
+              </span>` : ''}
+            <span class="setlist-pos">${String(i + 1).padStart(2, '0')}</span>
+            <div class="setlist-info">
+              <div class="setlist-title">${esc(song.title)}</div>
+              <div class="setlist-artist">${esc(song.artist)}</div>
+            </div>
+            <span class="setlist-votes">${song.votes} &#9829;</span>
+          </li>
+        `;
+      }).join('');
     }
 
     // ===== GENRE FILTER =====
@@ -1018,9 +1299,6 @@
             <div class="song-genre">${esc(song.genre)}</div>
           </div>
           <div class="song-actions">
-            <button class="btn btn-preview" onclick="playSong('${song.youtubeId}', '${esc(song.title)}', '${esc(song.artist)}')" title="Preview">
-              &#9654; Play
-            </button>
             <button class="btn btn-vote"
                     onclick="voteSong(${song.id}, this)"
                     ${disableVotes ? 'disabled' : ''}
@@ -1030,31 +1308,6 @@
           </div>
         </div>
       `).join('');
-    }
-
-    // ===== RENDER: PLAYER =====
-    function playSong(youtubeId, title, artist) {
-      currentVideoId = youtubeId;
-      playerContainer.innerHTML = `
-        <div class="youtube-wrapper">
-          <iframe
-            src="https://www.youtube.com/embed/${youtubeId}?autoplay=1&rel=0&modestbranding=1"
-            allow="autoplay; encrypted-media; fullscreen"
-            allowfullscreen>
-          </iframe>
-        </div>
-        <div class="now-playing">
-          <div class="equalizer">
-            <div class="eq-bar"></div><div class="eq-bar"></div><div class="eq-bar"></div>
-            <div class="eq-bar"></div><div class="eq-bar"></div>
-          </div>
-          <div>
-            <div class="now-playing-label">Nu speelt</div>
-            <div class="now-playing-title">${title}</div>
-            <div class="now-playing-artist">${artist}</div>
-          </div>
-        </div>
-      `;
     }
 
     // ===== VOTE BURST =====
@@ -1156,7 +1409,11 @@
           showLiveVoteToast(data.title, data.artist);
         }
         fetchTop10();
+        fetchSetlist();
       });
+
+      source.addEventListener('setlistUpdated', () => fetchSetlist());
+      source.addEventListener('nowPlayingUpdated', () => fetchSetlist());
 
       source.addEventListener('timer', e => {
         timerData = JSON.parse(e.data);
@@ -1168,16 +1425,18 @@
         renderVoteCounter();
         fetchAllSongs();
         fetchTop10();
+        fetchSetlist();
         showToast('Alle stemmen zijn gereset!', false);
       });
 
       source.addEventListener('songAdded', () => fetchAllSongs());
-      source.addEventListener('songRemoved', () => { fetchAllSongs(); fetchTop10(); });
+      source.addEventListener('songRemoved', () => { fetchAllSongs(); fetchTop10(); fetchSetlist(); });
       source.addEventListener('songPlayed', e => {
         const data = JSON.parse(e.data);
         showToast(`"${data.title}" is gespeeld!`, false);
         fetchAllSongs();
         fetchTop10();
+        fetchSetlist();
       });
 
       source.addEventListener('celebrate', e => {
@@ -1389,14 +1648,56 @@
       }
     });
 
+    // ===== QR CODE =====
+    (function initQR() {
+      const el = document.getElementById('qrCode');
+      const overlay = document.getElementById('qrOverlay');
+      const toggle = document.getElementById('qrToggle');
+      if (!el || typeof QRCode === 'undefined') return;
+
+      // Use the public origin so audience phones can reach it
+      const url = window.location.origin + window.location.pathname;
+      try {
+        new QRCode(el, {
+          text: url,
+          width: 240,
+          height: 240,
+          colorDark: '#0a0612',
+          colorLight: '#ffffff',
+          correctLevel: QRCode.CorrectLevel.M,
+        });
+      } catch (e) { console.error('QR error:', e); }
+
+      // Toggle collapse — remembered in localStorage
+      if (localStorage.getItem('qrCollapsed') === '1') {
+        overlay.classList.add('collapsed');
+        toggle.textContent = '+';
+      }
+      toggle.addEventListener('click', e => {
+        e.stopPropagation();
+        const collapsed = overlay.classList.toggle('collapsed');
+        toggle.textContent = collapsed ? '+' : '\u2212';
+        localStorage.setItem('qrCollapsed', collapsed ? '1' : '0');
+      });
+      overlay.addEventListener('click', () => {
+        if (overlay.classList.contains('collapsed')) {
+          overlay.classList.remove('collapsed');
+          toggle.textContent = '\u2212';
+          localStorage.setItem('qrCollapsed', '0');
+        }
+      });
+    })();
+
     // ===== INIT =====
     fetchAllSongs();
     fetchTop10();
+    fetchSetlist();
     fetchVotesUsed();
     fetchTimer();
     pollCelebration();
     connectSSE();
     setInterval(fetchTop10, 4000);
+    setInterval(fetchSetlist, 5000);
     setInterval(fetchTimer, 10000);
     setInterval(pollCelebration, 3000);
   </script>

@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Setlist | Live</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --neon-cyan: #00fff7;
+      --neon-magenta: #ff00ff;
+      --neon-purple: #b400ff;
+      --neon-pink: #ff2d95;
+      --neon-blue: #00b4ff;
+      --party-gold: #ffd24a;
+      --party-orange: #ff7a1a;
+      --party-red: #ff2960;
+      --bg-dark: #0a0612;
+      --bg-darker: #050308;
+      --panel-bg: rgba(14, 8, 24, 0.78);
+      --text-primary: #f4eef6;
+      --text-secondary: #b9a8c4;
+      --text-dim: #6a5d76;
+    }
+
+    html { scrollbar-width: thin; scrollbar-color: var(--party-orange) var(--bg-darker); }
+
+    body {
+      font-family: 'Rajdhani', sans-serif;
+      background:
+        radial-gradient(ellipse at 50% 110%, #2a0a2e 0%, transparent 60%),
+        radial-gradient(ellipse at 0% 0%, #1a0a24 0%, transparent 55%),
+        radial-gradient(ellipse at 100% 0%, #240a18 0%, transparent 55%),
+        var(--bg-dark);
+      color: var(--text-primary);
+      min-height: 100vh;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: var(--bg-darker); }
+    ::-webkit-scrollbar-thumb { background: var(--party-orange); border-radius: 4px; }
+
+    /* Stage lighting glow */
+    body::before {
+      content: '';
+      position: fixed; top: -50%; left: -50%; width: 200%; height: 200%;
+      background:
+        radial-gradient(ellipse at 20% 0%, rgba(255,122,26,0.12) 0%, transparent 45%),
+        radial-gradient(ellipse at 80% 0%, rgba(255,41,96,0.12) 0%, transparent 45%),
+        radial-gradient(ellipse at 50% 100%, rgba(180,0,255,0.10) 0%, transparent 55%),
+        radial-gradient(ellipse at 30% 60%, rgba(255,210,74,0.05) 0%, transparent 50%);
+      z-index: 0; pointer-events: none;
+    }
+
+    /* Spotlight beams */
+    .stage-lights {
+      position: fixed; inset: 0; pointer-events: none; z-index: 1;
+      overflow: hidden; mix-blend-mode: screen;
+    }
+    .stage-lights .beam {
+      position: absolute; top: -10%; left: 50%;
+      width: 320px; height: 130%;
+      transform-origin: top center;
+      filter: blur(34px);
+      opacity: 0.85;
+    }
+    .stage-lights .beam.b1 {
+      background: linear-gradient(180deg, rgba(255,122,26,0.22) 0%, rgba(255,122,26,0.05) 40%, transparent 75%);
+      animation: sweepA 9s ease-in-out infinite;
+    }
+    .stage-lights .beam.b2 {
+      background: linear-gradient(180deg, rgba(255,41,96,0.20) 0%, rgba(255,41,96,0.05) 40%, transparent 75%);
+      animation: sweepB 11s ease-in-out infinite;
+    }
+    .stage-lights .beam.b3 {
+      background: linear-gradient(180deg, rgba(180,0,255,0.22) 0%, rgba(180,0,255,0.05) 40%, transparent 75%);
+      animation: sweepC 13s ease-in-out infinite;
+    }
+    .stage-lights .beam.b4 {
+      background: linear-gradient(180deg, rgba(255,210,74,0.18) 0%, rgba(255,210,74,0.05) 40%, transparent 75%);
+      animation: sweepD 8s ease-in-out infinite;
+    }
+    @keyframes sweepA { 0%,100% { transform: translateX(-30%) rotate(-22deg); } 50% { transform: translateX(-10%) rotate(18deg); } }
+    @keyframes sweepB { 0%,100% { transform: translateX(15%) rotate(20deg); } 50% { transform: translateX(-15%) rotate(-18deg); } }
+    @keyframes sweepC { 0%,100% { transform: translateX(-50%) rotate(8deg); } 50% { transform: translateX(-50%) rotate(-12deg); } }
+    @keyframes sweepD { 0%,100% { transform: translateX(25%) rotate(-15deg); } 50% { transform: translateX(40%) rotate(15deg); } }
+
+    /* ===== HEADER ===== */
+    header {
+      position: relative; z-index: 10;
+      text-align: center;
+      padding: 2.5rem 2rem 1rem;
+    }
+
+    .logo {
+      font-family: 'Orbitron', sans-serif;
+      font-size: clamp(2rem, 5.5vw, 4.2rem);
+      font-weight: 900;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      background: linear-gradient(135deg, var(--party-gold), var(--party-orange), var(--party-red), var(--neon-magenta));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+      filter: drop-shadow(0 0 30px rgba(255,210,74,0.5));
+      animation: logoGlow 4s ease-in-out infinite alternate;
+    }
+
+    @keyframes logoGlow {
+      0% { filter: drop-shadow(0 0 25px rgba(255,210,74,0.5)); }
+      50% { filter: drop-shadow(0 0 50px rgba(255,41,96,0.6)); }
+      100% { filter: drop-shadow(0 0 25px rgba(180,0,255,0.5)); }
+    }
+
+    .subtitle {
+      font-family: 'Orbitron', sans-serif;
+      font-size: clamp(0.8rem, 1.2vw, 1.1rem);
+      color: var(--text-secondary);
+      letter-spacing: 0.4em;
+      text-transform: uppercase;
+      margin-top: 0.6rem;
+    }
+
+    .meta-row {
+      display: flex; justify-content: center; align-items: center;
+      gap: 1.5rem; flex-wrap: wrap;
+      margin-top: 1rem;
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 0.95rem;
+      color: var(--text-secondary);
+    }
+    .meta-row strong {
+      font-family: 'Orbitron', sans-serif;
+      color: var(--party-gold);
+      font-size: 1.1rem;
+      text-shadow: 0 0 12px rgba(255,210,74,0.5);
+      margin-right: 0.3rem;
+    }
+    .meta-divider {
+      width: 1px; height: 18px;
+      background: rgba(255,255,255,0.1);
+    }
+
+    /* ===== MAIN ===== */
+    main {
+      position: relative; z-index: 10;
+      max-width: 1700px; margin: 0 auto;
+      padding: 1.5rem 2rem 4rem;
+    }
+
+    .setlist-empty {
+      text-align: center;
+      padding: 6rem 1rem;
+      color: var(--text-dim);
+      font-size: 1.4rem;
+    }
+    .setlist-empty .empty-icon {
+      font-size: 5rem;
+      display: block;
+      margin-bottom: 1.5rem;
+      opacity: 0.4;
+    }
+
+    /* ===== NOW PLAYING (HERO) ===== */
+    .now-playing-hero {
+      position: relative;
+      background: linear-gradient(135deg, rgba(255,210,74,0.18), rgba(255,122,26,0.10), rgba(255,41,96,0.08));
+      border: 2px solid var(--party-gold);
+      border-radius: 22px;
+      padding: 2rem 2.5rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 0 50px rgba(255,210,74,0.3), inset 0 0 40px rgba(255,210,74,0.05);
+      animation: heroPulse 2.4s ease-in-out infinite alternate;
+      overflow: hidden;
+    }
+    .now-playing-hero::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: linear-gradient(90deg, transparent, rgba(255,210,74,0.04), transparent);
+      animation: heroSheen 4s ease-in-out infinite;
+      pointer-events: none;
+    }
+    @keyframes heroPulse {
+      from { box-shadow: 0 0 35px rgba(255,210,74,0.25), inset 0 0 30px rgba(255,210,74,0.04); }
+      to { box-shadow: 0 0 65px rgba(255,210,74,0.5), inset 0 0 50px rgba(255,210,74,0.08); }
+    }
+    @keyframes heroSheen {
+      0%, 100% { transform: translateX(-100%); }
+      50% { transform: translateX(100%); }
+    }
+
+    .hero-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6rem;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.85rem;
+      font-weight: 800;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--party-gold);
+      text-shadow: 0 0 15px rgba(255,210,74,0.7);
+      margin-bottom: 0.6rem;
+    }
+
+    .live-equalizer {
+      display: inline-flex; align-items: flex-end; gap: 3px; height: 18px;
+    }
+    .live-equalizer .eq-bar {
+      width: 3px; background: var(--party-gold); border-radius: 2px;
+      animation: eqBounce 0.7s ease-in-out infinite alternate;
+      box-shadow: 0 0 6px rgba(255,210,74,0.9);
+    }
+    .live-equalizer .eq-bar:nth-child(1) { height: 7px; animation-delay: 0s; }
+    .live-equalizer .eq-bar:nth-child(2) { height: 16px; animation-delay: 0.15s; }
+    .live-equalizer .eq-bar:nth-child(3) { height: 9px; animation-delay: 0.3s; }
+    .live-equalizer .eq-bar:nth-child(4) { height: 14px; animation-delay: 0.1s; }
+    @keyframes eqBounce { 0% { transform: scaleY(0.4); } 100% { transform: scaleY(1); } }
+
+    .hero-title {
+      font-family: 'Orbitron', sans-serif;
+      font-size: clamp(2rem, 5vw, 4rem);
+      font-weight: 900;
+      line-height: 1.1;
+      background: linear-gradient(135deg, #fff, var(--party-gold) 60%, var(--party-orange));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+      filter: drop-shadow(0 0 20px rgba(255,210,74,0.4));
+      margin-bottom: 0.4rem;
+      word-break: break-word;
+    }
+    .hero-artist {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: clamp(1.2rem, 2.5vw, 2rem);
+      font-weight: 600;
+      color: var(--text-secondary);
+      letter-spacing: 0.05em;
+    }
+    .hero-votes {
+      position: absolute;
+      top: 1.5rem; right: 1.8rem;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: var(--neon-magenta);
+      text-shadow: 0 0 14px rgba(255,0,255,0.6);
+      padding: 0.5rem 1rem;
+      border-radius: 18px;
+      background: rgba(255,0,255,0.12);
+      border: 1.5px solid rgba(255,0,255,0.35);
+      backdrop-filter: blur(6px);
+    }
+
+    /* ===== SETLIST GRID ===== */
+    .setlist-list {
+      list-style: none;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
+      gap: 1rem;
+    }
+
+    .setlist-item {
+      display: flex; align-items: center; gap: 1.2rem;
+      padding: 1.2rem 1.4rem;
+      border-radius: 16px;
+      background: rgba(255,122,26,0.05);
+      border: 1px solid rgba(255,122,26,0.18);
+      transition: all 0.3s ease;
+      position: relative;
+      min-height: 88px;
+      backdrop-filter: blur(6px);
+    }
+    .setlist-item:hover {
+      background: rgba(255,122,26,0.1);
+      border-color: rgba(255,122,26,0.4);
+      transform: translateY(-2px);
+    }
+    .setlist-item.played {
+      opacity: 0.35;
+      background: rgba(255,255,255,0.02);
+    }
+    .setlist-item.played .item-title { text-decoration: line-through; }
+
+    .item-pos {
+      font-family: 'Orbitron', sans-serif;
+      font-weight: 900;
+      font-size: 2.2rem;
+      min-width: 3.2rem;
+      text-align: center;
+      color: var(--party-orange);
+      text-shadow: 0 0 16px rgba(255,122,26,0.6);
+    }
+
+    .item-info { flex: 1; min-width: 0; }
+    .item-title {
+      font-weight: 700;
+      font-size: 1.35rem;
+      line-height: 1.25;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .item-artist {
+      font-size: 1rem;
+      color: var(--text-secondary);
+      margin-top: 0.2rem;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+
+    .item-votes {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--neon-magenta);
+      text-shadow: 0 0 12px rgba(255,0,255,0.55);
+      white-space: nowrap;
+      padding: 0.45rem 0.85rem;
+      border-radius: 16px;
+      background: rgba(255,0,255,0.1);
+      border: 1px solid rgba(255,0,255,0.25);
+    }
+
+    /* ===== UPCOMING SECTION HEADER ===== */
+    .section-divider {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin: 0.5rem 0 1.2rem;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.85rem;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--party-orange);
+      text-shadow: 0 0 12px rgba(255,122,26,0.4);
+    }
+    .section-divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(90deg, rgba(255,122,26,0.4), transparent);
+    }
+
+    /* ===== QR CODE OVERLAY ===== */
+    .qr-overlay {
+      position: fixed;
+      bottom: 1.5rem; right: 1.5rem;
+      z-index: 90;
+      background: rgba(10, 6, 18, 0.92);
+      border: 1px solid rgba(255, 210, 74, 0.4);
+      border-radius: 16px;
+      padding: 1rem 1rem 0.8rem;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 0 30px rgba(255, 122, 26, 0.2), 0 10px 30px rgba(0,0,0,0.5);
+      text-align: center;
+      transition: all 0.3s ease;
+    }
+    .qr-overlay:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 0 40px rgba(255, 210, 74, 0.35), 0 12px 35px rgba(0,0,0,0.6);
+      border-color: var(--party-gold);
+    }
+    .qr-overlay .qr-code {
+      width: 150px; height: 150px;
+      background: #fff;
+      padding: 8px;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .qr-overlay .qr-code img,
+    .qr-overlay .qr-code canvas {
+      display: block; width: 100%; height: 100%;
+    }
+    .qr-overlay .qr-label {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--party-gold);
+      text-shadow: 0 0 8px rgba(255,210,74,0.6);
+      margin-top: 0.7rem;
+    }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 900px) {
+      header { padding: 1.5rem 1rem 0.5rem; }
+      .meta-row { gap: 0.8rem; font-size: 0.85rem; margin-top: 0.6rem; }
+      .meta-row strong { font-size: 1rem; }
+
+      main { padding: 1rem 0.8rem 6rem; }
+
+      .now-playing-hero {
+        padding: 1.4rem 1.2rem 1.2rem;
+        margin-bottom: 1.2rem;
+        border-radius: 18px;
+      }
+      .hero-votes {
+        position: static;
+        display: inline-block;
+        margin-top: 0.8rem;
+        font-size: 0.85rem;
+        padding: 0.35rem 0.7rem;
+      }
+
+      .setlist-list {
+        grid-template-columns: 1fr;
+        gap: 0.6rem;
+      }
+      .setlist-item {
+        padding: 0.85rem 1rem;
+        gap: 0.8rem;
+        min-height: 70px;
+        border-radius: 14px;
+      }
+      .item-pos { font-size: 1.5rem; min-width: 2.2rem; }
+      .item-title { font-size: 1.05rem; }
+      .item-artist { font-size: 0.85rem; }
+      .item-votes { font-size: 0.78rem; padding: 0.3rem 0.6rem; }
+
+      .section-divider { font-size: 0.7rem; margin: 0.3rem 0 0.8rem; }
+
+      .qr-overlay {
+        bottom: 0.6rem; right: 0.6rem;
+        padding: 0.55rem 0.7rem;
+      }
+      .qr-overlay .qr-code { width: 70px; height: 70px; padding: 4px; }
+      .qr-overlay .qr-label { font-size: 0.5rem; margin-top: 0.4rem; }
+    }
+
+    /* Entrance animations */
+    .now-playing-hero,
+    .setlist-item {
+      opacity: 0;
+      animation: fadeIn 0.5s ease-out forwards;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(15px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+</head>
+<body>
+  <div class="stage-lights" aria-hidden="true">
+    <div class="beam b1"></div>
+    <div class="beam b2"></div>
+    <div class="beam b3"></div>
+    <div class="beam b4"></div>
+  </div>
+
+  <header>
+    <h1 class="logo">Setlist Vanavond</h1>
+    <p class="subtitle">Live &middot; Wat de band speelt</p>
+    <div class="meta-row" id="metaRow">
+      <span><strong id="metaRemaining">0</strong>nog te spelen</span>
+      <span class="meta-divider"></span>
+      <span><strong id="metaTotal">0</strong>nummers totaal</span>
+      <span class="meta-divider"></span>
+      <span><strong id="metaPlayed">0</strong>al gespeeld</span>
+    </div>
+  </header>
+
+  <main>
+    <div id="setlistContent">
+      <div class="setlist-empty">
+        <span class="empty-icon">&#127925;</span>
+        De setlist wordt nog samengesteld...
+      </div>
+    </div>
+  </main>
+
+  <!-- QR CODE OVERLAY -->
+  <div class="qr-overlay" title="Scan om mee te stemmen">
+    <div class="qr-code" id="qrCode"></div>
+    <div class="qr-label">Scan om te stemmen</div>
+  </div>
+
+  <script>
+    const setlistContent = document.getElementById('setlistContent');
+    const metaRemaining = document.getElementById('metaRemaining');
+    const metaTotal = document.getElementById('metaTotal');
+    const metaPlayed = document.getElementById('metaPlayed');
+
+    function esc(str) {
+      return String(str)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
+    async function fetchSetlist() {
+      try {
+        const res = await fetch('/api/setlist');
+        const data = await res.json();
+        renderSetlist(data);
+      } catch (e) { console.error('Failed to fetch setlist:', e); }
+    }
+
+    function renderSetlist(data) {
+      const songs = data.songs || [];
+      const nowPlayingId = data.nowPlayingId;
+
+      const total = songs.length;
+      const played = songs.filter(s => s.played).length;
+      const remaining = total - played;
+      metaRemaining.textContent = remaining;
+      metaTotal.textContent = total;
+      metaPlayed.textContent = played;
+
+      if (songs.length === 0) {
+        setlistContent.innerHTML = `
+          <div class="setlist-empty">
+            <span class="empty-icon">&#127925;</span>
+            De setlist wordt nog samengesteld...
+          </div>`;
+        return;
+      }
+
+      const nowPlayingSong = nowPlayingId ? songs.find(s => s.id === nowPlayingId) : null;
+      const others = songs.filter(s => !nowPlayingSong || s.id !== nowPlayingSong.id);
+
+      let html = '';
+
+      if (nowPlayingSong) {
+        const idx = songs.findIndex(s => s.id === nowPlayingSong.id);
+        html += `
+          <div class="now-playing-hero">
+            <div class="hero-label">
+              <span class="live-equalizer">
+                <span class="eq-bar"></span><span class="eq-bar"></span>
+                <span class="eq-bar"></span><span class="eq-bar"></span>
+              </span>
+              Nu Live &middot; #${String(idx + 1).padStart(2, '0')}
+            </div>
+            <div class="hero-title">${esc(nowPlayingSong.title)}</div>
+            <div class="hero-artist">${esc(nowPlayingSong.artist)}</div>
+            <div class="hero-votes">${nowPlayingSong.votes} &#9829;</div>
+          </div>
+        `;
+      }
+
+      if (others.length > 0) {
+        html += `<div class="section-divider">${nowPlayingSong ? 'Up Next' : 'Setlist'}</div>`;
+        html += '<ul class="setlist-list">';
+        html += others.map(song => {
+          const idx = songs.findIndex(s => s.id === song.id);
+          const cls = ['setlist-item'];
+          if (song.played) cls.push('played');
+          return `
+            <li class="${cls.join(' ')}">
+              <span class="item-pos">${String(idx + 1).padStart(2, '0')}</span>
+              <div class="item-info">
+                <div class="item-title">${esc(song.title)}</div>
+                <div class="item-artist">${esc(song.artist)}</div>
+              </div>
+              <span class="item-votes">${song.votes} &#9829;</span>
+            </li>
+          `;
+        }).join('');
+        html += '</ul>';
+      }
+
+      setlistContent.innerHTML = html;
+    }
+
+    // ===== SSE: REAL-TIME UPDATES =====
+    function connectSSE() {
+      const source = new EventSource('/api/events');
+      source.addEventListener('setlistUpdated', () => fetchSetlist());
+      source.addEventListener('nowPlayingUpdated', () => fetchSetlist());
+      source.addEventListener('vote', () => fetchSetlist());
+      source.addEventListener('songPlayed', () => fetchSetlist());
+      source.addEventListener('votesReset', () => fetchSetlist());
+      source.onerror = () => {
+        source.close();
+        setTimeout(connectSSE, 3000);
+      };
+    }
+
+    // ===== QR CODE =====
+    (function initQR() {
+      const el = document.getElementById('qrCode');
+      if (!el || typeof QRCode === 'undefined') return;
+      // QR points to the main voting page (not this screen)
+      const url = window.location.origin + '/';
+      try {
+        new QRCode(el, {
+          text: url,
+          width: 300,
+          height: 300,
+          colorDark: '#0a0612',
+          colorLight: '#ffffff',
+          correctLevel: QRCode.CorrectLevel.M,
+        });
+      } catch (e) { console.error('QR error:', e); }
+    })();
+
+    // ===== INIT =====
+    fetchSetlist();
+    connectSSE();
+    setInterval(fetchSetlist, 8000);
+  </script>
+</body>
+</html>
