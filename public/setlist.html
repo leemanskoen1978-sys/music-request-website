@@ -16,45 +16,60 @@
       --neon-purple: #b400ff;
       --neon-pink: #ff2d95;
       --neon-blue: #00b4ff;
-      --party-gold: #ffd24a;
-      --party-orange: #ff7a1a;
-      --party-red: #ff2960;
+      --party-gold: #ffd57a;
+      --party-orange: #ff8a36;
+      --party-red: #ff3d6c;
       --bg-dark: #0a0612;
       --bg-darker: #050308;
-      --panel-bg: rgba(14, 8, 24, 0.78);
-      --text-primary: #f4eef6;
-      --text-secondary: #b9a8c4;
-      --text-dim: #6a5d76;
+      --panel-bg: rgba(14, 8, 24, 0.86);
+      --text-primary: #fff5e8;
+      --text-secondary: #d4bfa6;
+      --text-dim: #8a7766;
     }
 
     html { scrollbar-width: thin; scrollbar-color: var(--party-orange) var(--bg-darker); }
 
     body {
       font-family: 'Rajdhani', sans-serif;
-      background:
-        radial-gradient(ellipse at 50% 110%, #2a0a2e 0%, transparent 60%),
-        radial-gradient(ellipse at 0% 0%, #1a0a24 0%, transparent 55%),
-        radial-gradient(ellipse at 100% 0%, #240a18 0%, transparent 55%),
-        var(--bg-dark);
+      background: var(--bg-dark);
       color: var(--text-primary);
       min-height: 100vh;
       overflow-x: hidden;
       position: relative;
     }
 
+    /* Blurred band photo as fixed background */
+    .bg-image {
+      position: fixed; inset: 0;
+      background-image: url('/images/band-bg.png');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      filter: blur(16px) saturate(1.1) brightness(0.5);
+      transform: scale(1.08);
+      z-index: -2;
+      pointer-events: none;
+    }
+    .bg-image::after {
+      content: '';
+      position: absolute; inset: 0;
+      background:
+        radial-gradient(ellipse at 50% 30%, rgba(10, 6, 18, 0.4) 0%, rgba(10, 6, 18, 0.85) 70%),
+        linear-gradient(180deg, rgba(10, 6, 18, 0.6) 0%, rgba(10, 6, 18, 0.82) 100%);
+    }
+
     ::-webkit-scrollbar { width: 8px; }
     ::-webkit-scrollbar-track { background: var(--bg-darker); }
     ::-webkit-scrollbar-thumb { background: var(--party-orange); border-radius: 4px; }
 
-    /* Stage lighting glow */
+    /* Stage lighting glow on top of band photo */
     body::before {
       content: '';
       position: fixed; top: -50%; left: -50%; width: 200%; height: 200%;
       background:
-        radial-gradient(ellipse at 20% 0%, rgba(255,122,26,0.12) 0%, transparent 45%),
-        radial-gradient(ellipse at 80% 0%, rgba(255,41,96,0.12) 0%, transparent 45%),
-        radial-gradient(ellipse at 50% 100%, rgba(180,0,255,0.10) 0%, transparent 55%),
-        radial-gradient(ellipse at 30% 60%, rgba(255,210,74,0.05) 0%, transparent 50%);
+        radial-gradient(ellipse at 50% 0%, rgba(255,180,80,0.10) 0%, transparent 45%),
+        radial-gradient(ellipse at 80% 100%, rgba(255,41,96,0.06) 0%, transparent 45%),
+        radial-gradient(ellipse at 20% 100%, rgba(180,0,255,0.05) 0%, transparent 55%);
       z-index: 0; pointer-events: none;
     }
 
@@ -68,22 +83,22 @@
       width: 320px; height: 130%;
       transform-origin: top center;
       filter: blur(34px);
-      opacity: 0.85;
+      opacity: 0.5;
     }
     .stage-lights .beam.b1 {
-      background: linear-gradient(180deg, rgba(255,122,26,0.22) 0%, rgba(255,122,26,0.05) 40%, transparent 75%);
+      background: linear-gradient(180deg, rgba(255,180,80,0.12) 0%, rgba(255,180,80,0.03) 40%, transparent 75%);
       animation: sweepA 9s ease-in-out infinite;
     }
     .stage-lights .beam.b2 {
-      background: linear-gradient(180deg, rgba(255,41,96,0.20) 0%, rgba(255,41,96,0.05) 40%, transparent 75%);
+      background: linear-gradient(180deg, rgba(255,41,96,0.10) 0%, rgba(255,41,96,0.03) 40%, transparent 75%);
       animation: sweepB 11s ease-in-out infinite;
     }
     .stage-lights .beam.b3 {
-      background: linear-gradient(180deg, rgba(180,0,255,0.22) 0%, rgba(180,0,255,0.05) 40%, transparent 75%);
+      background: linear-gradient(180deg, rgba(180,0,255,0.10) 0%, rgba(180,0,255,0.03) 40%, transparent 75%);
       animation: sweepC 13s ease-in-out infinite;
     }
     .stage-lights .beam.b4 {
-      background: linear-gradient(180deg, rgba(255,210,74,0.18) 0%, rgba(255,210,74,0.05) 40%, transparent 75%);
+      background: linear-gradient(180deg, rgba(255,210,74,0.10) 0%, rgba(255,210,74,0.03) 40%, transparent 75%);
       animation: sweepD 8s ease-in-out infinite;
     }
     @keyframes sweepA { 0%,100% { transform: translateX(-30%) rotate(-22deg); } 50% { transform: translateX(-10%) rotate(18deg); } }
@@ -443,6 +458,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
 <body>
+  <div class="bg-image" aria-hidden="true"></div>
   <div class="stage-lights" aria-hidden="true">
     <div class="beam b1"></div>
     <div class="beam b2"></div>
