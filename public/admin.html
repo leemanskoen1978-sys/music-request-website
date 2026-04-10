@@ -6,32 +6,32 @@
   <title>Admin Dashboard | Music Request</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
     :root {
-      --neon-cyan: #00fff7;
-      --neon-magenta: #ff00ff;
-      --neon-purple: #b400ff;
-      --neon-pink: #ff2d95;
-      --neon-blue: #00b4ff;
-      --neon-green: #39ff14;
-      --neon-orange: #ff6a00;
-      --neon-red: #ff3333;
-      --bg-dark: #0a0a12;
-      --bg-darker: #060609;
-      --panel-bg: rgba(10, 10, 24, 0.85);
-      --panel-border: rgba(0, 255, 247, 0.15);
-      --text-primary: #e8e8f0;
-      --text-secondary: #8888aa;
-      --text-dim: #555570;
+      --neon-cyan: #c9a84c;
+      --neon-magenta: #d4a0a0;
+      --neon-purple: #b08d57;
+      --neon-pink: #d4a0a0;
+      --neon-blue: #a0b4d4;
+      --neon-green: #8fad6a;
+      --neon-orange: #c9a84c;
+      --neon-red: #c47070;
+      --bg-dark: #0a0a0a;
+      --bg-darker: #050505;
+      --panel-bg: rgba(17, 17, 17, 0.85);
+      --panel-border: rgba(201, 168, 76, 0.15);
+      --text-primary: #f5f0e8;
+      --text-secondary: #8a8070;
+      --text-dim: #5a5045;
     }
 
     html { scrollbar-width: thin; scrollbar-color: var(--neon-cyan) var(--bg-darker); }
 
     body {
-      font-family: 'Rajdhani', sans-serif;
+      font-family: 'Inter', system-ui, sans-serif;
       background: var(--bg-dark);
       color: var(--text-primary);
       min-height: 100vh;
@@ -51,10 +51,10 @@
     .login-screen.hidden { display: none; }
 
     .login-title {
-      font-family: 'Orbitron', sans-serif;
+      font-family: 'Playfair Display', Georgia, serif;
       font-size: 1.8rem; font-weight: 900;
-      letter-spacing: 0.15em; text-transform: uppercase;
-      background: linear-gradient(135deg, var(--neon-cyan), var(--neon-magenta));
+      letter-spacing: 0.05em;
+      background: linear-gradient(135deg, #c9a84c, #e8d5a3);
       -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
     }
 
@@ -69,17 +69,16 @@
 
     .login-box input {
       width: 100%; padding: 0.8rem 1rem;
-      background: rgba(0,255,247,0.04);
-      border: 1px solid rgba(0,255,247,0.15);
+      background: rgba(201,168,76,0.04);
+      border: 1px solid rgba(201,168,76,0.15);
       border-radius: 10px; color: var(--text-primary);
-      font-family: 'Rajdhani', sans-serif;
+      font-family: 'Inter', system-ui, sans-serif;
       font-size: 1rem; font-weight: 500; outline: none;
       transition: all 0.3s;
     }
 
     .login-box input:focus {
       border-color: var(--neon-cyan);
-      box-shadow: 0 0 15px rgba(0,255,247,0.15);
     }
 
     .login-error {
@@ -97,15 +96,14 @@
     }
 
     .dash-title {
-      font-family: 'Orbitron', sans-serif;
+      font-family: 'Playfair Display', Georgia, serif;
       font-size: 1.3rem; font-weight: 800;
-      letter-spacing: 0.12em; text-transform: uppercase;
+      letter-spacing: 0.05em;
       color: var(--neon-cyan);
-      text-shadow: 0 0 15px rgba(0,255,247,0.4);
     }
 
     .dash-back {
-      font-family: 'Rajdhani', sans-serif;
+      font-family: 'Inter', system-ui, sans-serif;
       font-size: 0.8rem; font-weight: 700;
       text-decoration: none; color: var(--text-secondary);
       letter-spacing: 0.08em; text-transform: uppercase;
@@ -128,21 +126,20 @@
 
     .stat-card::before {
       content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
-      background: linear-gradient(90deg, transparent, var(--neon-cyan), transparent);
+      background: linear-gradient(90deg, transparent, rgba(201,168,76,0.3), transparent);
       opacity: 0.4;
     }
 
     .stat-value {
-      font-family: 'Orbitron', sans-serif;
+      font-family: 'Playfair Display', Georgia, serif;
       font-size: 2rem; font-weight: 900;
-      color: var(--neon-cyan);
-      text-shadow: 0 0 15px rgba(0,255,247,0.5);
+      color: #c9a84c;
     }
 
-    .stat-card:nth-child(2) .stat-value { color: var(--neon-magenta); text-shadow: 0 0 15px rgba(255,0,255,0.5); }
-    .stat-card:nth-child(3) .stat-value { color: var(--neon-purple); text-shadow: 0 0 15px rgba(180,0,255,0.5); }
-    .stat-card:nth-child(4) .stat-value { color: var(--neon-green); text-shadow: 0 0 15px rgba(57,255,20,0.5); }
-    .stat-card:nth-child(5) .stat-value { color: var(--neon-orange); text-shadow: 0 0 15px rgba(255,106,0,0.5); }
+    .stat-card:nth-child(2) .stat-value { color: #d4a0a0; }
+    .stat-card:nth-child(3) .stat-value { color: #b08d57; }
+    .stat-card:nth-child(4) .stat-value { color: #8fad6a; }
+    .stat-card:nth-child(5) .stat-value { color: #e8d5a3; }
 
     .stat-label {
       font-size: 0.75rem; font-weight: 600;
@@ -160,14 +157,14 @@
 
     .panel::before {
       content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
-      background: linear-gradient(90deg, transparent, var(--neon-cyan), transparent);
+      background: linear-gradient(90deg, transparent, rgba(201,168,76,0.3), transparent);
       opacity: 0.5;
     }
 
     .panel-header {
-      font-family: 'Orbitron', sans-serif;
+      font-family: 'Playfair Display', Georgia, serif;
       font-size: 0.8rem; font-weight: 700;
-      letter-spacing: 0.12em; text-transform: uppercase;
+      letter-spacing: 0.08em; text-transform: uppercase;
       padding: 1.2rem 1.5rem 0.8rem;
       display: flex; align-items: center; gap: 0.6rem;
     }
@@ -191,7 +188,7 @@
     }
 
     .action-card h3 {
-      font-family: 'Orbitron', sans-serif;
+      font-family: 'Playfair Display', Georgia, serif;
       font-size: 0.7rem; font-weight: 700;
       letter-spacing: 0.1em; text-transform: uppercase;
       margin-bottom: 0.8rem;
@@ -205,25 +202,24 @@
 
     .form-input {
       flex: 1; min-width: 120px; padding: 0.6rem 0.8rem;
-      background: rgba(0,255,247,0.04);
-      border: 1px solid rgba(0,255,247,0.12);
+      background: rgba(201,168,76,0.04);
+      border: 1px solid rgba(201,168,76,0.12);
       border-radius: 8px; color: var(--text-primary);
-      font-family: 'Rajdhani', sans-serif;
+      font-family: 'Inter', system-ui, sans-serif;
       font-size: 0.9rem; font-weight: 500; outline: none;
       transition: all 0.3s;
     }
 
     .form-input:focus {
       border-color: var(--neon-cyan);
-      box-shadow: 0 0 10px rgba(0,255,247,0.1);
     }
 
     .form-select {
       padding: 0.6rem 0.8rem;
-      background: rgba(0,255,247,0.04);
-      border: 1px solid rgba(0,255,247,0.12);
+      background: rgba(201,168,76,0.04);
+      border: 1px solid rgba(201,168,76,0.12);
       border-radius: 8px; color: var(--text-primary);
-      font-family: 'Rajdhani', sans-serif;
+      font-family: 'Inter', system-ui, sans-serif;
       font-size: 0.9rem; font-weight: 500; outline: none;
       cursor: pointer;
     }
@@ -232,7 +228,7 @@
 
     /* ===== BUTTONS ===== */
     .btn {
-      font-family: 'Rajdhani', sans-serif;
+      font-family: 'Inter', system-ui, sans-serif;
       font-weight: 700; font-size: 0.78rem;
       letter-spacing: 0.08em; text-transform: uppercase;
       padding: 0.5rem 1rem; border-radius: 8px;
@@ -241,65 +237,60 @@
     }
 
     .btn-cyan {
-      background: rgba(0,255,247,0.1);
-      border-color: rgba(0,255,247,0.3);
+      background: rgba(201,168,76,0.1);
+      border-color: rgba(201,168,76,0.3);
       color: var(--neon-cyan);
     }
     .btn-cyan:hover {
-      background: rgba(0,255,247,0.2);
+      background: rgba(201,168,76,0.2);
       border-color: var(--neon-cyan);
-      box-shadow: 0 0 15px rgba(0,255,247,0.25);
     }
 
     .btn-magenta {
-      background: rgba(255,0,255,0.1);
-      border-color: rgba(255,0,255,0.3);
+      background: rgba(212,160,160,0.1);
+      border-color: rgba(212,160,160,0.3);
       color: var(--neon-magenta);
     }
     .btn-magenta:hover {
-      background: rgba(255,0,255,0.2);
+      background: rgba(212,160,160,0.2);
       border-color: var(--neon-magenta);
-      box-shadow: 0 0 15px rgba(255,0,255,0.25);
     }
 
     .btn-green {
-      background: rgba(57,255,20,0.1);
-      border-color: rgba(57,255,20,0.3);
+      background: rgba(143,173,106,0.1);
+      border-color: rgba(143,173,106,0.3);
       color: var(--neon-green);
     }
     .btn-green:hover {
-      background: rgba(57,255,20,0.2);
+      background: rgba(143,173,106,0.2);
       border-color: var(--neon-green);
-      box-shadow: 0 0 15px rgba(57,255,20,0.25);
     }
 
     .btn-red {
-      background: rgba(255,50,50,0.1);
-      border-color: rgba(255,50,50,0.3);
+      background: rgba(196,112,112,0.1);
+      border-color: rgba(196,112,112,0.3);
       color: var(--neon-red);
     }
     .btn-red:hover {
-      background: rgba(255,50,50,0.2);
+      background: rgba(196,112,112,0.2);
       border-color: var(--neon-red);
-      box-shadow: 0 0 15px rgba(255,50,50,0.25);
     }
 
     .btn-orange {
-      background: rgba(255,106,0,0.1);
-      border-color: rgba(255,106,0,0.3);
+      background: rgba(201,168,76,0.1);
+      border-color: rgba(201,168,76,0.3);
       color: var(--neon-orange);
     }
     .btn-orange:hover {
-      background: rgba(255,106,0,0.2);
+      background: rgba(201,168,76,0.2);
       border-color: var(--neon-orange);
-      box-shadow: 0 0 15px rgba(255,106,0,0.25);
     }
 
     /* ===== SONG TABLE ===== */
     .song-table { width: 100%; border-collapse: collapse; }
 
     .song-table th {
-      font-family: 'Orbitron', sans-serif;
+      font-family: 'Playfair Display', Georgia, serif;
       font-size: 0.65rem; font-weight: 600;
       letter-spacing: 0.1em; text-transform: uppercase;
       color: var(--text-secondary);
@@ -313,7 +304,7 @@
       font-size: 0.9rem;
     }
 
-    .song-table tr:hover td { background: rgba(0,255,247,0.03); }
+    .song-table tr:hover td { background: rgba(201,168,76,0.03); }
 
     .song-table .played-row td { opacity: 0.4; text-decoration: line-through; }
 
@@ -321,9 +312,9 @@
       font-size: 0.65rem; font-weight: 700;
       letter-spacing: 0.05em; text-transform: uppercase;
       padding: 0.2rem 0.5rem; border-radius: 6px;
-      background: rgba(0,180,255,0.1);
-      color: var(--neon-blue);
-      border: 1px solid rgba(0,180,255,0.2);
+      background: rgba(201,168,76,0.1);
+      color: #e8d5a3;
+      border: 1px solid rgba(201,168,76,0.2);
     }
 
     .table-actions { display: flex; gap: 0.4rem; }
@@ -339,10 +330,9 @@
     }
 
     .timer-current {
-      font-family: 'Orbitron', sans-serif;
+      font-family: 'Playfair Display', Georgia, serif;
       font-size: 1.2rem; font-weight: 800;
       color: var(--neon-cyan);
-      text-shadow: 0 0 10px rgba(0,255,247,0.4);
     }
 
     .timer-status {
@@ -356,17 +346,15 @@
     .admin-toast {
       position: fixed; top: 20px; right: 20px; z-index: 9999;
       padding: 0.8rem 1.5rem;
-      background: rgba(10,10,24,0.95);
+      background: rgba(10,10,10,0.95);
       border: 1px solid var(--neon-green);
       border-radius: 10px; font-weight: 600;
       color: var(--neon-green);
-      box-shadow: 0 0 20px rgba(57,255,20,0.2);
       animation: toastIn 0.3s ease-out, toastOut 0.3s ease-in 2.7s forwards;
     }
 
     .admin-toast.error {
       border-color: var(--neon-red); color: var(--neon-red);
-      box-shadow: 0 0 20px rgba(255,50,50,0.2);
     }
 
     @keyframes toastIn { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
@@ -395,7 +383,7 @@
     }
 
     .setlist-col h3 {
-      font-family: 'Orbitron', sans-serif;
+      font-family: 'Playfair Display', Georgia, serif;
       font-size: 0.7rem; font-weight: 700;
       letter-spacing: 0.1em; text-transform: uppercase;
       margin-bottom: 0.6rem;
@@ -412,15 +400,15 @@
     .setlist-row {
       display: flex; align-items: center; gap: 0.6rem;
       padding: 0.55rem 0.7rem; border-radius: 10px;
-      background: rgba(255,210,74,0.05);
-      border: 1px solid rgba(255,210,74,0.18);
+      background: rgba(201,168,76,0.05);
+      border: 1px solid rgba(201,168,76,0.18);
       cursor: grab;
       user-select: none;
       transition: background 0.2s, border-color 0.2s, transform 0.15s;
     }
     .setlist-row:hover {
-      background: rgba(255,210,74,0.1);
-      border-color: rgba(255,210,74,0.4);
+      background: rgba(201,168,76,0.1);
+      border-color: rgba(201,168,76,0.4);
     }
     .setlist-row.dragging {
       opacity: 0.4;
@@ -428,19 +416,18 @@
     }
     .setlist-row.drag-over {
       border-color: var(--neon-cyan);
-      background: rgba(0,255,247,0.08);
+      background: rgba(201,168,76,0.08);
       transform: scale(1.02);
     }
     .setlist-row.now-playing-row {
-      border-color: var(--neon-green);
-      background: rgba(57,255,20,0.08);
-      box-shadow: 0 0 12px rgba(57,255,20,0.2);
+      border-color: #c9a84c;
+      background: rgba(201,168,76,0.1);
     }
 
     .setlist-row .pos {
-      font-family: 'Orbitron', sans-serif;
+      font-family: 'Playfair Display', Georgia, serif;
       font-weight: 800; font-size: 0.95rem;
-      color: #ffd24a;
+      color: #c9a84c;
       min-width: 1.6rem; text-align: center;
     }
     .setlist-row .info { flex: 1; min-width: 0; }
@@ -449,12 +436,12 @@
     .setlist-row .info .a { font-size: 0.72rem; color: var(--text-secondary);
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .setlist-row .v {
-      font-family: 'Orbitron', sans-serif;
+      font-family: 'Playfair Display', Georgia, serif;
       font-size: 0.7rem; font-weight: 700;
       color: var(--neon-magenta);
       padding: 0.15rem 0.45rem; border-radius: 10px;
-      background: rgba(255,0,255,0.08);
-      border: 1px solid rgba(255,0,255,0.18);
+      background: rgba(212,160,160,0.08);
+      border: 1px solid rgba(212,160,160,0.18);
       white-space: nowrap;
     }
     .setlist-row .row-actions { display: flex; gap: 0.25rem; }
@@ -474,27 +461,27 @@
     }
     .icon-btn.live {
       color: var(--neon-green);
-      border-color: rgba(57,255,20,0.3);
+      border-color: rgba(143,173,106,0.3);
     }
-    .icon-btn.live:hover { background: rgba(57,255,20,0.15); }
-    .icon-btn.danger { color: var(--neon-red); border-color: rgba(255,50,50,0.3); }
-    .icon-btn.danger:hover { background: rgba(255,50,50,0.15); }
+    .icon-btn.live:hover { background: rgba(143,173,106,0.15); }
+    .icon-btn.danger { color: var(--neon-red); border-color: rgba(196,112,112,0.3); }
+    .icon-btn.danger:hover { background: rgba(196,112,112,0.15); }
 
     .pool-row {
       display: flex; align-items: center; gap: 0.5rem;
       padding: 0.45rem 0.6rem; border-radius: 8px;
-      background: rgba(0,255,247,0.03);
-      border: 1px solid rgba(0,255,247,0.1);
+      background: rgba(201,168,76,0.03);
+      border: 1px solid rgba(201,168,76,0.1);
       transition: all 0.2s;
     }
-    .pool-row:hover { background: rgba(0,255,247,0.07); }
+    .pool-row:hover { background: rgba(201,168,76,0.07); }
     .pool-row .info { flex: 1; min-width: 0; }
     .pool-row .info .t { font-weight: 600; font-size: 0.82rem;
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .pool-row .info .a { font-size: 0.7rem; color: var(--text-secondary);
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .pool-row .v {
-      font-family: 'Orbitron', sans-serif;
+      font-family: 'Playfair Display', Georgia, serif;
       font-size: 0.68rem; font-weight: 600;
       color: var(--text-secondary);
     }
@@ -502,11 +489,11 @@
     .pool-search {
       width: 100%;
       padding: 0.5rem 0.7rem;
-      background: rgba(0,255,247,0.04);
-      border: 1px solid rgba(0,255,247,0.15);
+      background: rgba(201,168,76,0.04);
+      border: 1px solid rgba(201,168,76,0.15);
       border-radius: 8px;
       color: var(--text-primary);
-      font-family: 'Rajdhani', sans-serif;
+      font-family: 'Inter', system-ui, sans-serif;
       font-size: 0.85rem;
       outline: none;
       margin-bottom: 0.5rem;
@@ -569,7 +556,7 @@
 
     <!-- ACTIONS -->
     <div class="panel">
-      <div class="panel-header" style="color: var(--neon-orange); text-shadow: 0 0 15px rgba(255,106,0,0.4);">
+      <div class="panel-header" style="color: var(--neon-orange);">
         &#9889; Acties
       </div>
       <div class="panel-body">
@@ -619,7 +606,7 @@
 
           <!-- CELEBRATION -->
           <div class="action-card">
-            <h3 style="color: #ffd700;">&#127881; Viering / Bericht</h3>
+            <h3 style="color: #e8d5a3;">&#127881; Viering / Bericht</h3>
             <p style="font-size:0.82rem; color:var(--text-secondary); margin-bottom:0.6rem;">
               Toon een spectaculair bericht op alle schermen met confetti en vuurwerk!
             </p>
@@ -648,9 +635,9 @@
 
     <!-- SETLIST MANAGER -->
     <div class="panel">
-      <div class="panel-header" style="color: #ffd24a; text-shadow: 0 0 15px rgba(255,210,74,0.4); justify-content: space-between; flex-wrap: wrap;">
+      <div class="panel-header" style="color: #c9a84c; justify-content: space-between; flex-wrap: wrap;">
         <span>&#127908; Setlist Manager</span>
-        <span style="font-family:'Rajdhani',sans-serif; font-size:0.78rem; color: var(--text-secondary); text-transform:none; letter-spacing: 0.04em;">
+        <span style="font-family:'Inter',system-ui,sans-serif; font-size:0.78rem; color: var(--text-secondary); text-transform:none; letter-spacing: 0.04em;">
           Sleep om volgorde te bepalen &middot; klik &#9654; om "Live" te markeren
         </span>
       </div>
@@ -664,7 +651,7 @@
         <div class="setlist-grid">
           <div class="setlist-col">
             <h3>
-              <span style="color:#ffd24a;">&#127925; In Setlist</span>
+              <span style="color:#c9a84c;">&#127925; In Setlist</span>
               <span id="setlistCount" style="color:var(--text-secondary); font-weight:500;">0 nummers</span>
             </h3>
             <div class="setlist-scroll" id="setlistContainer">
@@ -685,7 +672,7 @@
 
     <!-- SONG TABLE -->
     <div class="panel">
-      <div class="panel-header" style="color: var(--neon-cyan); text-shadow: 0 0 15px rgba(0,255,247,0.4); justify-content: space-between; flex-wrap: wrap;">
+      <div class="panel-header" style="color: var(--neon-cyan); justify-content: space-between; flex-wrap: wrap;">
         <span>&#9835; Alle Nummers</span>
         <div style="display:flex; gap:0.5rem; align-items:center;">
           <button class="btn btn-cyan btn-sm" onclick="exportCSV()">&#8615; Export CSV</button>
@@ -828,7 +815,7 @@
           <td>${esc(s.title)}</td>
           <td>${esc(s.artist)}</td>
           <td><span class="genre-badge">${esc(s.genre)}</span></td>
-          <td style="font-family:'Orbitron',sans-serif; font-weight:700; color:${s.votes > 0 ? 'var(--neon-magenta)' : 'var(--text-dim)'}">
+          <td style="font-family:'Playfair Display',Georgia,serif; font-weight:700; color:${s.votes > 0 ? 'var(--neon-magenta)' : 'var(--text-dim)'}">
             ${s.votes}
           </td>
           <td style="color:${s.played ? 'var(--neon-green)' : 'var(--text-dim)'}; font-weight:600; font-size:0.8rem">
